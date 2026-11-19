@@ -1,28 +1,23 @@
-PROJECT SCOPE — MANDATORY
-WORK ONLY IN: D:\PROJECTS\Dharma_Time_WEB
-NEVER EDIT, CREATE, DELETE, OR FORMAT FILES IN CORE: D:\PROJECTS\Dharma_Time_v4
-ALL CHANGES MUST STAY INSIDE THE WEB DIRECTORY ABOVE.
+# Dharma Time WEB — frontend
 
-# Dharma Time WEB
+D:\PROJECTS\Dharma_Time_WEB — только frontend. Целевой публичный репозиторий: tssrkt/Dharma_Time_WEB; публикация: GitHub Pages.
 
-> **ГРАНИЦЫ ПРОЕКТА — ОБЯЗАТЕЛЬНО**
->
-> Единственная рабочая папка: **D:\PROJECTS\Dharma_Time_WEB**. Работа ведётся только в ней.
->
-> Вычислительное ядро: **D:\PROJECTS\Dharma_Time_v4**. **В ядро не вносим никаких изменений** — не редактируем, не создаём, не удаляем и не форматируем файлы ядра. Все изменения выполняются только в WEB-папке. Если задача требует изменения ядра, фиксируем ограничение и ищем решение на стороне WEB либо останавливаемся.
+## Архитектура
+- Frontend: публичный GitHub-репозиторий → GitHub Pages.
+- Backend: `D:\PROJECTS\Dharma_Time_Backend` — отдельная копия ядра и HTTP API.
+- После подготовки backend: новый приватный GitHub-репозиторий → Enzonic Deploy Free.
+- Связь: HTTPS API и JSON.
+- Оригинал D:\PROJECTS\Dharma_Time_v4 не изменять. Целевой backend не размещать в frontend-папке.
 
-## Документация
+## Документы
+- Главный план: temp/docs/PLAN.md
+- API-контракт: temp/docs/API_CONTRACT.md
+- Enzonic: temp/docs/ENZONIC_DEPLOY.md
+- Аудит исходного ядра: temp/docs/NUCLEUS.md
+- Локальный граф: temp/docs/NUCLEUS_GRAPH.json
+- Дизайн: temp/docs/INTERFACE_DESIGN.md
+- Wireframes: temp/docs/WIREFRAMES.md
 
-- План разработки: temp/docs/PLAN.md
-- Контракт API: temp/docs/API_CONTRACT.md
-- Подготовка Enzonic (деплой не выполнен): temp/docs/ENZONIC_DEPLOY.md
-- Карта зависимости ядра: temp/docs/NUCLEUS.md
-- Машинный граф (локальный): temp/docs/NUCLEUS_GRAPH.json
+HTTP API-прототип и его тесты перенесены в `D:\PROJECTS\Dharma_Time_Backend` (`api_main.py`, `tests/test_http_api.py`). В WEB-папке API-кода и Python-зависимостей оставаться не должно. Enzonic deployment ещё не выполнен.
 
-## Локальная разработка
-
-- Точка входа FastAPI: main.py
-- HTTP-тесты: tests/test_http_api.py
-- Окружение Python 3.11: temp/venv_api
-
-Ядро является read-only зависимостью. Не подключать Enzonic и не выполнять deployment без отдельного разрешения. Не создавать коммиты и не отправлять изменения без отдельного указания.
+Без БД, регистрации, платёжных аккаунтов, банковских карт, биллинга и платных оверлимитов. temp/docs — локальная документация/графы; не коммитить и не публиковать без отдельного указания.
