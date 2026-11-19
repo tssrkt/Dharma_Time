@@ -413,3 +413,12 @@ app = CORSMiddleware(
     allow_headers=["Accept", "Content-Type"],
     expose_headers=["Retry-After"],
 )
+
+
+if __name__ == "__main__":
+    # Enzonic standard Python service starts this file directly.
+    # Prefer its SERVER_PORT; retain PORT for local/container compatibility.
+    import uvicorn
+
+    _port = int(os.environ.get("SERVER_PORT") or os.environ.get("PORT") or "8000")
+    uvicorn.run(app, host="0.0.0.0", port=_port, log_level="info")
