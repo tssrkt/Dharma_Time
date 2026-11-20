@@ -1,0 +1,524 @@
+(() => {
+  "use strict";
+
+  const API_BASE = "https://dharma-time.enzonic.dev";
+  const STORAGE_KEY = "dharma-time-settings-v1";
+  const RETRY_LIMIT = 1;
+  const RETRY_DELAY_CAP_MS = 8000;
+  const CATEGORIES = {
+    astronomy: { label: "Астрономия", modules: [
+      ["moon", "Луна"], ["sun", "Солнце"], ["eclipses", "Затмения"], ["meteors", "Метеоры"],
+      ["comets", "Кометы"], ["planets", "Планеты"], ["earth", "Земля"]
+    ]},
+    theravada: { label: "Тхеравада", modules: [
+      ["sri_lanka", "Шри-Ланка"], ["thai", "Таиланд"], ["myanmar", "Мьянма"]
+    ]},
+    mahayana: { label: "Махаяна", modules: [
+      ["tibet", "Тибет"], ["china", "Китай"], ["nepal", "Непал"], ["japan", "Япония"], ["vietnam", "Вьетнам"]
+    ]},
+    hindu: { label: "Индуизм", modules: [
+      ["north_india", "Северная Индия"], ["south_india", "Южная Индия"], ["indonesia", "Индонезия и Бали"]
+    ]},
+    misc: { label: "Другое", modules: [
+      ["christian_orthodox_old", "Православный календарь (старый стиль)"],
+      ["christian_orthodox_new", "Православный календарь (новый стиль)"],
+      ["christian_catholic", "Католический календарь"],
+      ["name_days_orthodox_old", "Именины (православные, старый стиль)"],
+      ["name_days_orthodox_new", "Именины (православные, новый стиль)"],
+      ["name_days_catholic", "Именины (католические)"],
+      ["government_russia", "Государственные праздники России"],
+      ["government_ukraine", "Государственные праздники Украины"],
+      ["international", "Международные даты"],
+      ["professional", "Профессиональные праздники"],
+      ["fun_dates", "Забавные даты"]
+    ]}
+  };
+  const CATEGORY_ORDER = ["astronomy", "buddhism", "hindu", "misc"];
+  const MODULE_CATEGORY = {};
+  Object.entries(CATEGORIES).forEach(([key, group]) => group.modules.forEach(([id]) => MODULE_CATEGORY[id] = key));
+  MODULE_CATEGORY.sri_lanka = "buddhism";
+  MODULE_CATEGORY.thai = "buddhism";
+  MODULE_CATEGORY.myanmar = "buddhism";
+  MODULE_CATEGORY.tibet = "buddhism";
+  MODULE_CATEGORY.china = "buddhism";
+  MODULE_CATEGORY.nepal = "buddhism";
+  MODULE_CATEGORY.japan = "buddhism";
+  MODULE_CATEGORY.vietnam = "buddhism";
+
+  const DEFAULTS = {
+    activeSettingsCategory: "astronomy",
+    selectedModules: ["moon", "sun"],
+    locale: "ru",
+    cityName: "",
+    latitude: "",
+    longitude: ""
+  };
+  const state = {
+    month: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    selectedDate: new Date(),
+    activeSettingsCategory: DEFAULTS.activeSettingsCategory,
+    activeEventCategory: "astronomy",
+    selectedModules: new Set(DEFAULTS.selectedModules),
+    monthEvents: [],
+    dayEvents: [],
+    monthRequestId: 0,
+    dayRequestId: 0,
+    monthController: null,
+    dayController: null,
+    expandedEvents: new Set(),
+    settings: { ...DEFAULTS }
+  };
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const monthTitle = $("#month-title");
+  const calendarGrid = $("#calendar-grid");
+  const calendarStatus = $("#calendar-status");
+  const dayTitle = $("#day-title");
+  const dayWeekday = $("#day-weekday");
+  const dayEvents = $("#day-events");
+  const dayEmpty = $("#day-empty");
+  const dayStatus = $("#day-status");
+  const moduleList = $("#module-list");
+  const today = new Date();
+  const locale = "ru";
+  state.settings.locale = locale;
+  let selectedDayKey = dateKey(state.selectedDate);
+
+  function dateKey(date) {
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+  }
+  function parseDate(value) {
+    const parts = String(value || "").slice(0, 10).split("-").map(Number);
+    if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null;
+    const result = new Date(parts[0], parts[1] - 1, parts[2]);
+    return result.getFullYear() === parts[0] && result.getMonth() === parts[1] - 1 && result.getDate() === parts[2] ? result : null;
+  }
+  function sameDay(a, b) { return dateKey(a) === dateKey(b); }
+  function monthName(date) { return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(date); }
+  function longDate(date) { return new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(date); }
+  function titleCase(value) { return value ? value.charAt(0).toLocaleUpperCase(locale) + value.slice(1) : ""; }
+  function escapeText(value) { return String(value == null ? "" : value); }
+
+  function loadSettings() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (!stored || typeof stored !== "object") return;
+      state.activeSettingsCategory = CATEGORY_ORDER.includes(stored.activeSettingsCategory) ? stored.activeSettingsCategory : DEFAULTS.activeSettingsCategory;
+      const validIds = new Set(Object.values(CATEGORIES).flatMap(group => group.modules.map(([id]) => id)));
+      const selected = Array.isArray(stored.selectedModules) ? stored.selectedModules.filter(id => validIds.has(id)) : DEFAULTS.selectedModules;
+      state.selectedModules = new Set(selected);
+      state.settings = { ...DEFAULTS, ...stored, locale };
+      state.settings.selectedModules = Array.from(state.selectedModules);
+    } catch (_) {
+      state.settings = { ...DEFAULTS };
+      state.selectedModules = new Set(DEFAULTS.selectedModules);
+    }
+  }
+  function saveSettings() {
+    state.settings.activeSettingsCategory = state.activeSettingsCategory;
+    state.settings.selectedModules = Array.from(state.selectedModules);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings)); } catch (_) { /* Storage can be unavailable in private browsing. */ }
+  }
+  function getSelectedModules() { return Array.from(state.selectedModules).sort(); }
+  function currentTimezone() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch (_) { return "UTC"; }
+  }
+  function requestParams(date) {
+    const params = new URLSearchParams();
+    const modules = getSelectedModules();
+    if (!modules.length) return null;
+    params.set("modules", modules.join(","));
+    params.set("locale", state.settings.locale || locale);
+    params.set("user_timezone", currentTimezone());
+    if (state.settings.cityName && state.settings.latitude !== "" && state.settings.longitude !== "") {
+      const lat = Number(state.settings.latitude), lon = Number(state.settings.longitude);
+      if (Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+        params.set("city_name", state.settings.cityName.trim());
+        params.set("latitude", String(lat));
+        params.set("longitude", String(lon));
+      }
+    }
+    const countries = [];
+    if (modules.includes("government_russia")) countries.push("Russia");
+    if (modules.includes("government_ukraine")) countries.push("Ukraine");
+    if (countries.length) params.set("countries", countries.join(","));
+    if (date) params.set("date", dateKey(date));
+    return params;
+  }
+  function retryDelay(response, attempt) {
+    const value = response && response.headers ? response.headers.get("Retry-After") : null;
+    if (value) {
+      const seconds = Number(value);
+      if (Number.isFinite(seconds)) return Math.min(RETRY_DELAY_CAP_MS, Math.max(0, seconds * 1000));
+      const target = Date.parse(value);
+      if (Number.isFinite(target)) return Math.min(RETRY_DELAY_CAP_MS, Math.max(0, target - Date.now()));
+    }
+    return Math.min(RETRY_DELAY_CAP_MS, 600 * (attempt + 1));
+  }
+  function wait(ms, signal) {
+    return new Promise((resolve, reject) => {
+      if (signal && signal.aborted) return reject(new DOMException("Aborted", "AbortError"));
+      const timer = setTimeout(resolve, ms);
+      if (signal) signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); }, { once: true });
+    });
+  }
+  async function fetchJson(url, signal) {
+    for (let attempt = 0; ; attempt++) {
+      let response;
+      try { response = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, signal, cache: "no-store" }); }
+      catch (error) { throw error; }
+      if (response.ok) return response.json();
+      if ((response.status === 429 || response.status === 503) && attempt < RETRY_LIMIT) {
+        await wait(retryDelay(response, attempt), signal);
+        continue;
+      }
+      const error = new Error(response.status === 429 ? "rate_limit" : response.status === 503 ? "temporarily_unavailable" : "request_failed");
+      error.status = response.status;
+      throw error;
+    }
+  }
+  function safeErrorMessage(error) {
+    if (error && error.name === "AbortError") return "";
+    if (error && error.status === 429) return "Сервис временно ограничил частоту запросов. Попробуйте немного позже.";
+    return "Не удалось загрузить календарь. Проверьте подключение и попробуйте позже.";
+  }
+  function normalizeEvents(payload) {
+    if (Array.isArray(payload)) return payload;
+    return payload && Array.isArray(payload.events) ? payload.events : [];
+  }
+  function eventDate(event) {
+    return parseDate(event.start_date || event.start || event.display_dates && event.display_dates[0]);
+  }
+  function eventsForMonth(events, month) {
+    return events.filter(event => {
+      const start = parseDate(event.start_date || event.start);
+      const end = parseDate(event.end_date || event.end) || start;
+      if (!start) return false;
+      const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+      const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      return start <= monthEnd && end >= monthStart;
+    });
+  }
+  function eventOccursOn(event, date) {
+    const key = dateKey(date);
+    if (Array.isArray(event.display_dates) && event.display_dates.some(item => String(item).slice(0, 10) === key)) return true;
+    const start = parseDate(event.start_date || event.start);
+    const end = parseDate(event.end_date || event.end) || start;
+    return Boolean(start && end && start <= date && end >= date);
+  }
+  function categoryForEvent(event) {
+    const module = String(event.module || "");
+    if (MODULE_CATEGORY[module]) return MODULE_CATEGORY[module];
+    const tradition = String(event.tradition || "").toLowerCase();
+    if (["theravada", "mahayana"].includes(tradition)) return "buddhism";
+    if (tradition.includes("hindu")) return "hindu";
+    if (["astronomy", "astronomical"].includes(tradition)) return "astronomy";
+    return "misc";
+  }
+  function iconForCategory(category) { return ({ astronomy: "☾", buddhism: "☸", hindu: "ॐ", misc: "✿" })[category] || "✿"; }
+  function renderCalendar() {
+    monthTitle.textContent = titleCase(monthName(state.month));
+    calendarGrid.replaceChildren();
+    const year = state.month.getFullYear(), month = state.month.getMonth();
+    const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const previousDays = new Date(year, month, 0).getDate();
+    const cells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+    const monthEventKeys = new Set();
+    state.monthEvents.forEach(event => {
+      const start = parseDate(event.start_date || event.start);
+      const end = parseDate(event.end_date || event.end) || start;
+      if (!start || !end) return;
+      for (let d = new Date(Math.max(start.getTime(), new Date(year, month, 1).getTime())); d <= end && d.getMonth() === month; d.setDate(d.getDate() + 1)) monthEventKeys.add(dateKey(d));
+    });
+    for (let i = 0; i < cells; i++) {
+      let date, outside = false;
+      if (i < firstWeekday) { date = new Date(year, month - 1, previousDays - firstWeekday + i + 1); outside = true; }
+      else if (i >= firstWeekday + daysInMonth) { date = new Date(year, month + 1, i - firstWeekday - daysInMonth + 1); outside = true; }
+      else date = new Date(year, month, i - firstWeekday + 1);
+      const key = dateKey(date);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "calendar-day";
+      button.setAttribute("role", "gridcell");
+      button.setAttribute("aria-label", longDate(date));
+      button.setAttribute("aria-pressed", String(sameDay(date, state.selectedDate)));
+      button.textContent = String(date.getDate());
+      if (outside) button.classList.add("is-outside");
+      if (sameDay(date, today)) button.classList.add("is-today");
+      if (sameDay(date, state.selectedDate)) button.classList.add("is-selected");
+      if (monthEventKeys.has(key)) {
+        button.classList.add("has-events");
+        const dot = document.createElement("span");
+        dot.className = "event-dot";
+        dot.setAttribute("aria-hidden", "true");
+        button.append(dot);
+      }
+      button.addEventListener("click", () => {
+        state.selectedDate = date;
+        selectedDayKey = dateKey(date);
+        state.expandedEvents.clear();
+        renderCalendar();
+        renderDayHeading();
+        loadDayEvents();
+      });
+      calendarGrid.append(button);
+    }
+  }
+  function renderModuleList() {
+    moduleList.replaceChildren();
+    const active = state.activeSettingsCategory;
+    const groupKeys = active === "buddhism" ? ["theravada", "mahayana"] : [active];
+    groupKeys.forEach(key => {
+      const group = CATEGORIES[key];
+      if (!group) return;
+      const container = document.createElement("div");
+      container.className = "module-group";
+      if (active === "buddhism") {
+        const details = document.createElement("details");
+        details.open = true;
+        const summary = document.createElement("summary");
+        summary.textContent = group.label;
+        details.append(summary);
+        group.modules.forEach(([id, label]) => details.append(makeModuleOption(id, label)));
+        container.append(details);
+      } else {
+        group.modules.forEach(([id, label]) => container.append(makeModuleOption(id, label)));
+      }
+      moduleList.append(container);
+    });
+    $$("#settings-categories .image-tab").forEach(button => {
+      const isActive = button.dataset.category === active;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+    });
+  }
+  function makeModuleOption(id, label) {
+    const row = document.createElement("label");
+    row.className = "module-option";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = state.selectedModules.has(id);
+    input.value = id;
+    input.addEventListener("change", () => {
+      if (input.checked) state.selectedModules.add(id); else state.selectedModules.delete(id);
+      saveSettings();
+      state.monthEvents = [];
+      renderCalendar();
+      if (!getSelectedModules().length) {
+        state.monthRequestId++;
+        state.dayRequestId++;
+        if (state.monthController) state.monthController.abort();
+        if (state.dayController) state.dayController.abort();
+        calendarStatus.textContent = "";
+        dayStatus.textContent = "";
+        state.dayEvents = [];
+        renderDayEvents();
+        renderCalendar();
+        return;
+      }
+      loadMonthEvents();
+      loadDayEvents();
+    });
+    const text = document.createElement("span");
+    text.textContent = label;
+    row.append(input, text);
+    return row;
+  }
+  function renderDayHeading() {
+    const date = state.selectedDate;
+    dayWeekday.textContent = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date).toLocaleUpperCase(locale);
+    dayTitle.textContent = titleCase(new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date)) + (sameDay(date, today) ? " (сегодня)" : "");
+  }
+  function renderDayEvents() {
+    const filtered = state.dayEvents.filter(event => categoryForEvent(event) === state.activeEventCategory);
+    dayEvents.replaceChildren();
+    const hasAny = state.dayEvents.length > 0;
+    $$("#event-categories .image-tab").forEach(button => {
+      const category = button.dataset.category;
+      const enabled = state.dayEvents.some(event => categoryForEvent(event) === category);
+      const active = category === state.activeEventCategory;
+      button.disabled = !enabled;
+      button.classList.toggle("is-active", active && enabled);
+      button.setAttribute("aria-pressed", String(active && enabled));
+    });
+    dayEmpty.hidden = filtered.length > 0;
+    if (!hasAny) dayEmpty.textContent = getSelectedModules().length ? "На выбранную дату событий не найдено." : "Включите хотя бы один календарь в настройках.";
+    else if (!filtered.length) dayEmpty.textContent = "В этой категории нет событий на выбранную дату. Выберите другую вкладку.";
+    filtered.forEach((event, index) => {
+      const card = document.createElement("article");
+      card.className = "event-card";
+      const title = document.createElement("h3");
+      title.className = "event-title";
+      title.textContent = iconForCategory(categoryForEvent(event)) + " " + String(event.title || "Событие").toLocaleUpperCase(locale);
+      const dates = document.createElement("p");
+      dates.className = "event-date";
+      const start = event.start_date || event.start;
+      const end = event.end_date || event.end;
+      dates.textContent = start && end && String(start).slice(0, 10) !== String(end).slice(0, 10) ? String(start).slice(0, 10) + " — " + String(end).slice(0, 10) : "";
+      if (!dates.textContent) dates.hidden = true;
+      const summary = document.createElement("p");
+      summary.className = "event-summary";
+      summary.textContent = String(event.short_description || event.description || "");
+      const descriptionText = String(event.description || event.short_description || "");
+      const isExpanded = state.expandedEvents.has(String(event.id || index));
+      card.append(title, dates, summary);
+      if (isExpanded) {
+        const description = document.createElement("p");
+        description.className = "event-description";
+        description.textContent = descriptionText;
+        card.append(description);
+      }
+      if (descriptionText.length > 140) {
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "event-toggle";
+        toggle.textContent = isExpanded ? "Свернуть" : "Подробнее";
+        toggle.addEventListener("click", () => {
+          const id = String(event.id || index);
+          if (state.expandedEvents.has(id)) state.expandedEvents.delete(id); else state.expandedEvents.add(id);
+          renderDayEvents();
+        });
+        card.append(toggle);
+      }
+      dayEvents.append(card);
+    });
+  }
+  async function loadMonthEvents() {
+    const modules = getSelectedModules();
+    if (!modules.length) return;
+    const params = requestParams();
+    if (!params) return;
+    params.set("year", String(state.month.getFullYear()));
+    params.set("month", String(state.month.getMonth() + 1));
+    if (state.monthController) state.monthController.abort();
+    const controller = new AbortController();
+    state.monthController = controller;
+    const requestId = ++state.monthRequestId;
+    calendarStatus.textContent = "Загружаем события…";
+    try {
+      const payload = await fetchJson(API_BASE + "/api/calendar/month?" + params.toString(), controller.signal);
+      if (requestId !== state.monthRequestId) return;
+      state.monthEvents = eventsForMonth(normalizeEvents(payload), state.month);
+      calendarStatus.textContent = "";
+      renderCalendar();
+    } catch (error) {
+      if (requestId !== state.monthRequestId || error.name === "AbortError") return;
+      state.monthEvents = [];
+      calendarStatus.textContent = safeErrorMessage(error);
+      renderCalendar();
+    }
+  }
+  async function loadDayEvents() {
+    const modules = getSelectedModules();
+    if (!modules.length) {
+      state.dayEvents = [];
+      dayStatus.textContent = "";
+      renderDayEvents();
+      return;
+    }
+    const params = requestParams(state.selectedDate);
+    if (!params) return;
+    if (state.dayController) state.dayController.abort();
+    const controller = new AbortController();
+    state.dayController = controller;
+    const requestId = ++state.dayRequestId;
+    const keyAtRequest = dateKey(state.selectedDate);
+    dayStatus.textContent = "Загружаем события…";
+    dayEmpty.hidden = true;
+    try {
+      const payload = await fetchJson(API_BASE + "/api/calendar/day?" + params.toString(), controller.signal);
+      if (requestId !== state.dayRequestId || keyAtRequest !== dateKey(state.selectedDate)) return;
+      state.dayEvents = normalizeEvents(payload).filter(event => eventOccursOn(event, state.selectedDate));
+      const available = new Set(state.dayEvents.map(categoryForEvent));
+      if (!available.has(state.activeEventCategory)) state.activeEventCategory = CATEGORY_ORDER.find(key => available.has(key)) || "astronomy";
+      dayStatus.textContent = "";
+      renderDayEvents();
+    } catch (error) {
+      if (requestId !== state.dayRequestId || error.name === "AbortError") return;
+      state.dayEvents = [];
+      dayStatus.textContent = safeErrorMessage(error);
+      renderDayEvents();
+    }
+  }
+  function changeMonth(offset) {
+    const oldDate = state.selectedDate;
+    const nextMonth = new Date(state.month.getFullYear(), state.month.getMonth() + offset, 1);
+    state.month = nextMonth;
+    const lastDay = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
+    state.selectedDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), Math.min(oldDate.getDate(), lastDay));
+    selectedDayKey = dateKey(state.selectedDate);
+    state.expandedEvents.clear();
+    renderCalendar();
+    renderDayHeading();
+    if (getSelectedModules().length) {
+      loadMonthEvents();
+      loadDayEvents();
+    } else {
+      state.monthEvents = [];
+      state.dayEvents = [];
+      renderCalendar();
+      renderDayEvents();
+    }
+  }
+  function resetSettings() {
+    state.activeSettingsCategory = DEFAULTS.activeSettingsCategory;
+    state.selectedModules = new Set(DEFAULTS.selectedModules);
+    state.settings = { ...DEFAULTS, locale };
+    saveSettings();
+    renderModuleList();
+    state.monthEvents = [];
+    renderCalendar();
+    if (state.monthController) state.monthController.abort();
+    if (state.dayController) state.dayController.abort();
+    loadMonthEvents();
+    loadDayEvents();
+  }
+  function wireEvents() {
+    $("#previous-month").addEventListener("click", () => changeMonth(-1));
+    $("#next-month").addEventListener("click", () => changeMonth(1));
+    $("#go-today").addEventListener("click", () => {
+      const now = new Date();
+      state.month = new Date(now.getFullYear(), now.getMonth(), 1);
+      state.selectedDate = now;
+      selectedDayKey = dateKey(now);
+      state.expandedEvents.clear();
+      renderCalendar();
+      renderDayHeading();
+      loadMonthEvents();
+      loadDayEvents();
+    });
+    $("#settings-categories").addEventListener("click", event => {
+      const button = event.target.closest("button[data-category]");
+      if (!button) return;
+      state.activeSettingsCategory = button.dataset.category;
+      saveSettings();
+      renderModuleList();
+    });
+    $("#event-categories").addEventListener("click", event => {
+      const button = event.target.closest("button[data-category]");
+      if (!button || button.disabled) return;
+      state.activeEventCategory = button.dataset.category;
+      renderDayEvents();
+    });
+    $("#reset-settings").addEventListener("click", resetSettings);
+  }
+  function init() {
+    loadSettings();
+    selectedDayKey = dateKey(state.selectedDate);
+    renderCalendar();
+    renderModuleList();
+    renderDayHeading();
+    renderDayEvents();
+    wireEvents();
+    if (getSelectedModules().length) {
+      loadMonthEvents();
+      loadDayEvents();
+    } else {
+      calendarStatus.textContent = "";
+      dayStatus.textContent = "";
+      renderDayEvents();
+    }
+  }
+  init();
+})();

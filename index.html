@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f2e9">
+  <meta name="description" content="Календарь Dharma Time">
+  <title>Dharma Time — календарь</title>
+  <link rel="icon" href="assets/flower.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Dharma Time — на главную"><span class="brand-mark" aria-hidden="true">☸</span><span>Dharma Time</span></a>
+      <p class="header-note">Календарь традиций и природных циклов</p>
+    </header>
+    <div class="workspace">
+      <section class="calendar-column" aria-label="Календарь и настройки">
+        <div class="calendar-panel panel">
+          <div class="month-toolbar">
+            <button class="icon-button month-step" id="previous-month" type="button" aria-label="Предыдущий месяц">‹</button>
+            <div class="month-heading"><h1 id="month-title">Загрузка календаря…</h1><button class="today-button" id="go-today" type="button">Сегодня</button></div>
+            <button class="icon-button month-step" id="next-month" type="button" aria-label="Следующий месяц">›</button>
+          </div>
+          <div class="weekday-row" aria-hidden="true"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+          <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="Дни месяца"></div>
+          <div class="calendar-legend"><span class="legend-dot"></span><span>Есть события</span></div>
+          <p class="status-message" id="calendar-status" role="status" aria-live="polite"></p>
+        </div>
+        <section class="settings-panel panel" aria-label="Выбор календарей">
+          <div class="category-tabs" id="settings-categories" aria-label="Категории календарей">
+            <button class="image-tab is-active" type="button" data-category="astronomy" aria-label="Астрономические календари" aria-pressed="true"><img src="assets/moon.svg" alt=""></button>
+            <button class="image-tab" type="button" data-category="buddhism" aria-label="Буддийские календари" aria-pressed="false"><img src="assets/dharma-wheel.svg" alt=""></button>
+            <button class="image-tab" type="button" data-category="hindu" aria-label="Индуистские календари" aria-pressed="false"><img src="assets/om.svg" alt=""></button>
+            <button class="image-tab" type="button" data-category="misc" aria-label="Другие календари" aria-pressed="false"><img src="assets/flower.svg" alt=""></button>
+          </div>
+          <div id="module-list" class="module-list"></div>
+          <div class="settings-footer"><button id="reset-settings" class="text-button" type="button">Сбросить настройки</button></div>
+        </section>
+      </section>
+      <section class="day-panel panel" aria-label="События выбранного дня">
+        <div class="day-heading"><p class="eyebrow" id="day-weekday"></p><h2 id="day-title">Выберите дату</h2></div>
+        <div class="category-tabs event-tabs" id="event-categories" aria-label="Категории событий">
+          <button class="image-tab is-active" type="button" data-category="astronomy" aria-label="Астрономические события" aria-pressed="true" disabled><img src="assets/moon.svg" alt=""></button>
+          <button class="image-tab" type="button" data-category="buddhism" aria-label="Буддийские события" aria-pressed="false" disabled><img src="assets/dharma-wheel.svg" alt=""></button>
+          <button class="image-tab" type="button" data-category="hindu" aria-label="Индуистские события" aria-pressed="false" disabled><img src="assets/om.svg" alt=""></button>
+          <button class="image-tab" type="button" data-category="misc" aria-label="Другие события" aria-pressed="false" disabled><img src="assets/flower.svg" alt=""></button>
+        </div>
+        <div id="day-events" class="event-list"></div>
+        <p class="empty-state" id="day-empty">Выберите дату в календаре.</p>
+        <p class="status-message" id="day-status" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+    <footer class="site-footer">Dharma Time <span aria-hidden="true">·</span> Время для осознанности</footer>
+  </main>
+</body>
+</html>
