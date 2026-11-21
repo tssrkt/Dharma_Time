@@ -112,6 +112,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .event-card { padding: 16px 17px; border: 1px solid var(--line); border-radius: 14px; background: #fffefa; }
 .event-title { margin: 0 0 8px; font-size: 19px; line-height: 1.5; font-weight: 750; letter-spacing: .015em; }
 .event-summary, .event-description { margin: 0; color: #65736a; font-size: 17px; line-height: 1.7; text-align: justify; overflow-wrap: anywhere; }
+.event-summary { white-space: pre-line; }
 .event-description { margin-top: 9px; white-space: pre-line; }
 .event-collapsed { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; white-space: pre-line; }
 .moon-summary { white-space: pre-line; text-align: left; }

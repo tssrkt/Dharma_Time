@@ -761,6 +761,77 @@
       card.append(toggle);
     }
   }
+  function eventSupplementaryInfo(event) {
+    const extra = event && event.extra && typeof event.extra === "object" ? event.extra : {};
+    const lines = [];
+    const city = typeof extra.display_city === "string" ? extra.display_city.trim() : "";
+    if (city) lines.push((locale === "en" ? "City: " : "Город: ") + city);
+
+    const tibetan = event && event.module === "tibet" ? extra : null;
+    if (tibetan && ["tibetan_year", "tibetan_month", "lunar_day", "tibetan_year_animal", "tibetan_year_element", "tibetan_month_animal", "tibetan_month_element", "tibetan_day_animal", "tibetan_day_element"].every(key => Number.isInteger(tibetan[key]))) {
+      const animalsRu = ["Мыши", "Быка", "Тигра", "Кролика", "Дракона", "Змеи", "Лошади", "Овцы", "Обезьяны", "Птицы", "Собаки", "Свиньи"];
+      const animalsEn = ["Mouse", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Sheep", "Monkey", "Bird", "Dog", "Pig"];
+      const elementsRu = ["Деревян", "Огнен", "Землян", "Железн", "Водян"];
+      const elementsEn = ["Wood", "Fire", "Earth", "Metal", "Water"];
+      const ru = locale !== "en";
+      const animal = n => (ru ? animalsRu : animalsEn)[((n % 12) + 12) % 12];
+      const element = n => (ru ? elementsRu : elementsEn)[((n % 5) + 5) % 5];
+      const yearAnimal = animal(tibetan.tibetan_year_animal);
+      const yearElement = element(tibetan.tibetan_year_element);
+      const monthAnimal = animal(tibetan.tibetan_month_animal);
+      const monthElement = element(tibetan.tibetan_month_element);
+      const dayAnimal = animal(tibetan.tibetan_day_animal);
+      const dayElement = element(tibetan.tibetan_day_element);
+      const number = n => ((n % 12) + 12) % 12 + 1;
+      const yearLine = ru
+        ? "Год " + yearElement + (new Set([0, 5, 6, 7, 8, 9, 10, 11]).has(((tibetan.tibetan_year_animal % 12) + 12) % 12) ? "ой " : "ого ") + yearAnimal + " (" + number(tibetan.tibetan_year_animal) + ")"
+        : "Year of the " + yearElement + " " + yearAnimal + " (" + number(tibetan.tibetan_year_animal) + ")";
+      const monthLine = ru
+        ? (tibetan.is_leap_month === true ? "Високосный месяц " : "Месяц ") + monthElement + (new Set([0, 5, 6, 7, 8, 9, 10, 11]).has(((tibetan.tibetan_month_animal % 12) + 12) % 12) ? "ой " : "ого ") + monthAnimal + " (" + tibetan.tibetan_month + ")"
+        : (tibetan.is_leap_month === true ? "Leap month of the " : "Month of the ") + monthElement + " " + monthAnimal + " (" + tibetan.tibetan_month + ")";
+      const dayLine = ru
+        ? "День " + dayElement + (new Set([0, 5, 6, 7, 8, 9, 10, 11]).has(((tibetan.tibetan_day_animal % 12) + 12) % 12) ? "ой " : "ого ") + dayAnimal + " (" + number(tibetan.tibetan_day_animal) + ")"
+        : "Day of the " + dayElement + " " + dayAnimal + " (" + number(tibetan.tibetan_day_animal) + ")";
+      lines.push(yearLine, monthLine, dayLine, (ru ? (tibetan.is_skipped === true ? "Пропущенный цеше жаг (Chad): " : tibetan.is_doubled === true || tibetan.is_first_of_doubled === true ? "Сдвоенный цеше жаг (Lhag): " : "Цеше жаг: ") : (tibetan.is_skipped === true ? "Skipped Tseshe Zhag (Chad): " : tibetan.is_doubled === true || tibetan.is_first_of_doubled === true ? "Doubled Tseshe Zhag (Lhag): " : "Tseshe Zhag: ")) + tibetan.lunar_day);
+    } else {
+      const yearFields = [
+        ["buddhist_year", locale === "en" ? "Buddhist year" : "Буддийский год", " BE"],
+        ["be_year", locale === "en" ? "Buddhist year" : "Буддийский год", " BE"],
+        ["myanmar_year", locale === "en" ? "Burmese year" : "Бирманский год", " ME"]
+      ];
+      for (const [key, label, suffix] of yearFields) {
+        if (Number.isInteger(extra[key]) && !lines.some(line => line.startsWith(label + ":"))) lines.push(label + ": " + extra[key] + suffix);
+      }
+    }
+
+    const lunar = event && event.lunar_info && typeof event.lunar_info === "object" ? event.lunar_info : {};
+    const lunarLabels = {
+      lunar_day: locale === "en" ? "Lunar day" : "Лунный день",
+      lunar_phase: locale === "en" ? "Lunar phase" : "Фаза Луны",
+      tithi: "Титхи",
+      paksha: "Пакша",
+      moon_age: locale === "en" ? "Moon age" : "Возраст Луны",
+      illumination: locale === "en" ? "Illumination" : "Освещённость Луны",
+      thai_month: locale === "en" ? "Thai lunar month" : "Тайский лунный месяц",
+      myanmar_month: locale === "en" ? "Myanmar lunar month" : "Бирманский лунный месяц",
+      myanmar_month_number: locale === "en" ? "Myanmar month number" : "Номер бирманского месяца",
+      myanmar_year: locale === "en" ? "Myanmar year" : "Бирманский год",
+      tibetan_month: locale === "en" ? "Tibetan month" : "Тибетский месяц",
+      tibetan_lunar_day: locale === "en" ? "Tibetan lunar day" : "Тибетский лунный день",
+      chinese_month: locale === "en" ? "Chinese lunar month" : "Китайский лунный месяц",
+      chinese_day: locale === "en" ? "Chinese lunar day" : "Китайский лунный день",
+      vietnamese_lunar_year: locale === "en" ? "Vietnamese lunar year" : "Вьетнамский лунный год",
+      vietnamese_month: locale === "en" ? "Vietnamese month" : "Вьетнамский месяц"
+    };
+    Object.entries(lunarLabels).forEach(([key, label]) => {
+      const value = lunar[key];
+      if (value !== null && value !== undefined && value !== "" && !lines.some(line => line.startsWith(label + ":"))) {
+        lines.push(label + ": " + String(value));
+      }
+    });
+    return lines.join("\n");
+  }
+
   function renderDayEvents() {
     const filtered = state.dayEvents.filter(event => categoryForEvent(event) === state.activeEventCategory && !(state.moonInfo && state.activeEventCategory === "astronomy" && String(event.module || "") === "moon"));
     dayEvents.replaceChildren();
@@ -839,23 +910,25 @@
       if (!dates.textContent) dates.hidden = true;
       const rawDescription = eventDescription(event);
       const descriptionText = formatDescription(rawDescription, event.module);
+      const supplementaryText = eventSupplementaryInfo(event);
+      const fullText = [descriptionText, supplementaryText].filter(Boolean).join("\n\n");
       const summary = document.createElement("p");
       summary.className = "event-summary";
-      summary.textContent = descriptionText;
+      summary.textContent = fullText;
       const eventId = String(event.id || index);
       const isExpanded = state.expandedEvents.has(eventId);
       summary.classList.toggle("event-collapsed", !isExpanded);
       card.append(title, dates);
-      if (!isExpanded && descriptionText) card.append(summary);
-      if (isExpanded && descriptionText) {
+      if (!isExpanded && fullText) card.append(summary);
+      if (isExpanded && fullText) {
         const description = document.createElement("p");
         description.className = "event-description";
-        description.textContent = descriptionText;
+        description.textContent = fullText;
         card.append(description);
       }
       dayEvents.append(card);
 
-      const hasMoreThanThree = hasMoreThanThreeLines(descriptionText, card, "event-description");
+      const hasMoreThanThree = hasMoreThanThreeLines(fullText, card, "event-description");
       if (hasMoreThanThree || isExpanded) {
         const toggle = document.createElement("button");
         toggle.type = "button";
