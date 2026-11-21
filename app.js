@@ -300,9 +300,13 @@
 
     return "";
   }
-  function formatDescription(value) {
+  function formatDescription(value, module) {
     const text = String(value || "").replace(/\r\n?/g, "\n").trim();
-    if (!text || /\n/.test(text) || text.length < 220) return text;
+    if (!text) return text;
+    if (module === "tibet") {
+      return text.replace(/[\t ]*\n+[\t ]*(?=Празднуется)/giu, " ");
+    }
+    if (/\n/.test(text) || text.length < 220) return text;
 
     const sentences = text.split(/(?<=[.!?]) +/u);
     if (sentences.length < 4) return text;
@@ -847,7 +851,7 @@
       dates.textContent = start && end && String(start).slice(0, 10) !== String(end).slice(0, 10) ? String(start).slice(0, 10) + " — " + String(end).slice(0, 10) : "";
       if (!dates.textContent) dates.hidden = true;
       const rawDescription = eventDescription(event);
-      const descriptionText = formatDescription(rawDescription);
+      const descriptionText = formatDescription(rawDescription, event.module);
       const summary = document.createElement("p");
       summary.className = "event-summary";
       summary.textContent = descriptionText;
