@@ -270,42 +270,11 @@
     return "misc";
   }
   function eventDescription(event) {
-    const supplied = String(event.description || event.short_description || "").trim();
-    if (supplied) return supplied;
-
-    const extra = event.extra && typeof event.extra === "object" ? event.extra : {};
-    const module = String(event.module || "");
-    const phaseAliases = {
-      phase_new_moon: "new_moon",
-      phase_first_quarter: "first_quarter",
-      phase_full_moon: "full_moon",
-      phase_last_quarter: "last_quarter"
-    };
-    const kind = String(extra.kind || phaseAliases[extra.phase_key] || "");
-    if (module === "moon") {
-      const phaseDescriptions = {
-        new_moon: "Новолуние: освещённая сторона Луны обращена от Земли, поэтому Луна обычно почти не видна на ночном небе.",
-        first_quarter: "Первая четверть: Луна растёт, и с Земли видна примерно половина её освещённого диска.",
-        full_moon: "Полнолуние: видимый с Земли диск Луны освещён почти полностью.",
-        last_quarter: "Последняя четверть: Луна убывает, и с Земли видна примерно половина её освещённого диска."
-      };
-      if (phaseDescriptions[kind]) return phaseDescriptions[kind];
-    }
-    if (module === "sun" && kind === "solar_sign_ingress") {
-      return "Дата перехода Солнца в следующий знак тропического зодиака по выбранному календарю.";
-    }
-    if (module.startsWith("name_days_") && Array.isArray(extra.names) && extra.names.length) {
-      return "Именины по выбранному календарю. Имена: " + extra.names.join(", ") + ".";
-    }
-
-    return "";
+    return String(event.description || event.short_description || "").trim();
   }
   function formatDescription(value, module) {
     const text = String(value || "").replace(/\r\n?/g, "\n").trim();
     if (!text) return text;
-    if (module === "tibet") {
-      return text.replace(/[\t ]*\n+[\t ]*(?=Празднуется)/giu, " ");
-    }
     if (/\n/.test(text) || text.length < 220) return text;
 
     const sentences = text.split(/(?<=[.!?]) +/u);
@@ -379,7 +348,7 @@
         const dayEvents = state.monthEvents.filter(event => eventOccursOn(event, date));
         button.classList.add("has-events");
         const phaseLabel = moonPhase ? " Фаза Луны: " + moonPhase.label + "." : "";
-        button.setAttribute("aria-label", longDate(date) + "." + phaseLabel + " События: " + dayEvents.map(event => String(event.title || "Событие")).join("; "));
+        button.setAttribute("aria-label", longDate(date) + "." + phaseLabel + " События: " + dayEvents.map(event => String(event.title || "")).filter(Boolean).join("; "));
         const tooltip = document.createElement("span");
         tooltip.className = "event-tooltip";
         tooltip.setAttribute("aria-hidden", "true");
@@ -387,7 +356,7 @@
         list.className = "event-tooltip-list";
         dayEvents.forEach(event => {
           const item = document.createElement("li");
-          item.textContent = String(event.title || "Событие");
+          item.textContent = String(event.title || "");
           list.append(item);
         });
         tooltip.append(list);
@@ -813,7 +782,7 @@
       title.textContent = "\u{1F538} \u041f\u0423\u0413\u041f\u0410 (\u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f)";
       const details = document.createElement("p");
       details.className = "event-description phugpa-summary";
-      details.textContent = String(info.description || "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u041f\u0443\u0433\u043f\u0430 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e.").replace(/^\u{1F538}\s*/u, "");
+      details.textContent = String(info.description || "").replace(/^\u{1F538}\s*/u, "");
       const phugpaDescription = details.textContent;
       card.append(title, details);
       appendDailySummaryToggle(card, details, phugpaDescription, "phugpa-daily-" + dateKey(state.selectedDate));
@@ -824,8 +793,8 @@
       const title = document.createElement("h3"); title.className = "event-title";
       title.textContent = "\u{1F338} \u041f\u0410\u041d\u0427\u0410\u041d\u0413\u0410 (\u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f)";
       const details = document.createElement("p"); details.className = "event-description panchanga-summary";
-      const panchangaDescription = String(state.panchangaInfo.description || "").replace(/^\u{1F338}\s*/u, "").replace(/([^\n])\n(?=(?:Начало|Start):)/g, "$1\n\n");
-      details.textContent = panchangaDescription || "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0430\u043d\u0447\u0430\u043d\u0433\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f.";
+      const panchangaDescription = String(state.panchangaInfo.description || "").replace(/^\u{1F338}\s*/u, "");
+      details.textContent = panchangaDescription;
       card.append(title, details);
       appendDailySummaryToggle(card, details, details.textContent, "panchanga-daily-" + dateKey(state.selectedDate));
     }
@@ -839,7 +808,8 @@
       const details = document.createElement("p");
       details.className = "event-summary moon-summary";
       details.textContent = lines.join("\n");
-      card.append(title, details);
+      if (title.textContent) card.append(title);
+      if (details.textContent) card.append(details);
       dayEvents.append(card);
     }
 
@@ -849,7 +819,8 @@
       const title = document.createElement("h3");
       title.className = "event-title";
       const eventEmoji = String(event.emoji || "");
-      title.textContent = (eventEmoji ? eventEmoji + " " : "") + String(event.title || "Событие").toLocaleUpperCase(locale);
+      title.textContent = (eventEmoji ? eventEmoji + " " : "") + String(event.title || "").toLocaleUpperCase(locale);
+      title.hidden = !eventEmoji && !event.title;
       const dates = document.createElement("p");
       dates.className = "event-date";
       const start = event.start_date || event.start;
