@@ -66,6 +66,7 @@
     monthController: null,
     dayController: null,
     expandedEvents: new Set(),
+    nameDaysOpen: false,
     settings: { ...DEFAULTS }
   };
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -107,6 +108,7 @@
       const validIds = new Set(Object.values(CATEGORIES).flatMap(group => group.modules.map(([id]) => id)));
       const selected = Array.isArray(stored.selectedModules) ? stored.selectedModules.filter(id => validIds.has(id)) : DEFAULTS.selectedModules;
       state.selectedModules = new Set(selected);
+      normalizeExclusiveModuleGroups();
       state.settings = { ...DEFAULTS, ...stored, locale };
       state.settings.selectedModules = Array.from(state.selectedModules);
     } catch (_) {
@@ -331,6 +333,8 @@
         details.append(summary);
         group.modules.forEach(([id, label]) => details.append(makeModuleOption(id, label)));
         container.append(details);
+      } else if (active === "misc") {
+        renderMiscModuleOptions(container);
       } else {
         group.modules.forEach(([id, label]) => container.append(makeModuleOption(id, label)));
       }
@@ -342,37 +346,176 @@
       button.setAttribute("aria-pressed", String(isActive));
     });
   }
-  function makeModuleOption(id, label) {
+  const CHRISTIAN_MODULES = ["christian_orthodox_old", "christian_orthodox_new", "christian_catholic"];
+  const ORTHODOX_NAME_DAY_MODULES = ["name_days_orthodox_old", "name_days_orthodox_new"];
+  const GOVERNMENT_MODULES = ["government_russia", "government_ukraine"];
+
+  function replaceModuleSelection(group, selectedId) {
+    group.forEach(id => state.selectedModules.delete(id));
+    if (selectedId) state.selectedModules.add(selectedId);
+  }
+  function normalizeExclusiveModuleGroups() {
+    [CHRISTIAN_MODULES, ORTHODOX_NAME_DAY_MODULES, GOVERNMENT_MODULES].forEach(group => {
+      const selected = Array.from(state.selectedModules).filter(id => group.includes(id));
+      if (selected.length > 1) replaceModuleSelection(group, selected[selected.length - 1]);
+    });
+  }
+  function anyModuleSelected(ids) {
+    return ids.some(id => state.selectedModules.has(id));
+  }
+  function renderMiscModuleOptions(container) {
+    const christianSelected = anyModuleSelected(CHRISTIAN_MODULES);
+    container.append(makeCheckboxControl("Христианство", christianSelected, checked => {
+      if (checked) {
+        if (!anyModuleSelected(CHRISTIAN_MODULES)) state.selectedModules.add("christian_orthodox_new");
+      } else {
+        replaceModuleSelection(CHRISTIAN_MODULES, null);
+      }
+      moduleSelectionChanged();
+    }));
+    if (christianSelected) {
+      const children = document.createElement("div");
+      children.className = "module-children";
+      const orthodoxSelected = anyModuleSelected(["christian_orthodox_old", "christian_orthodox_new"]);
+      children.append(makeRadioControl("Православие", "christian-tradition", orthodoxSelected, () => {
+        const oldStyle = state.selectedModules.has("christian_orthodox_old");
+        replaceModuleSelection(CHRISTIAN_MODULES, oldStyle ? "christian_orthodox_old" : "christian_orthodox_new");
+        moduleSelectionChanged();
+      }));
+      if (orthodoxSelected) {
+        const styles = document.createElement("div");
+        styles.className = "module-children module-subchildren";
+        styles.append(makeRadioControl("Старое", "christian-style", state.selectedModules.has("christian_orthodox_old"), () => {
+          replaceModuleSelection(CHRISTIAN_MODULES, "christian_orthodox_old");
+          moduleSelectionChanged();
+        }));
+        styles.append(makeRadioControl("Новое", "christian-style", state.selectedModules.has("christian_orthodox_new"), () => {
+          replaceModuleSelection(CHRISTIAN_MODULES, "christian_orthodox_new");
+          moduleSelectionChanged();
+        }));
+        children.append(styles);
+      }
+      children.append(makeRadioControl("Католицизм", "christian-tradition", state.selectedModules.has("christian_catholic"), () => {
+        replaceModuleSelection(CHRISTIAN_MODULES, "christian_catholic");
+        moduleSelectionChanged();
+      }));
+      container.append(children);
+    }
+
+    const nameDays = document.createElement("details");
+    nameDays.className = "module-folder";
+    nameDays.open = state.nameDaysOpen;
+    nameDays.addEventListener("toggle", () => { state.nameDaysOpen = nameDays.open; });
+    const nameDaysSummary = document.createElement("summary");
+    nameDaysSummary.textContent = "Именины";
+    nameDays.append(nameDaysSummary);
+    const nameDayChildren = document.createElement("div");
+    nameDayChildren.className = "module-children";
+    const orthodoxNamesSelected = anyModuleSelected(ORTHODOX_NAME_DAY_MODULES);
+    nameDayChildren.append(makeCheckboxControl("Православие", orthodoxNamesSelected, checked => {
+      if (checked) {
+        const oldStyle = state.selectedModules.has("name_days_orthodox_old");
+        replaceModuleSelection(ORTHODOX_NAME_DAY_MODULES, oldStyle ? "name_days_orthodox_old" : "name_days_orthodox_new");
+      } else {
+        replaceModuleSelection(ORTHODOX_NAME_DAY_MODULES, null);
+      }
+      moduleSelectionChanged();
+    }));
+    if (orthodoxNamesSelected) {
+      const styles = document.createElement("div");
+      styles.className = "module-children module-subchildren";
+      styles.append(makeRadioControl("Старое", "name-days-style", state.selectedModules.has("name_days_orthodox_old"), () => {
+        replaceModuleSelection(ORTHODOX_NAME_DAY_MODULES, "name_days_orthodox_old");
+        moduleSelectionChanged();
+      }));
+      styles.append(makeRadioControl("Новое", "name-days-style", state.selectedModules.has("name_days_orthodox_new"), () => {
+        replaceModuleSelection(ORTHODOX_NAME_DAY_MODULES, "name_days_orthodox_new");
+        moduleSelectionChanged();
+      }));
+      nameDayChildren.append(styles);
+    }
+    nameDayChildren.append(makeCheckboxControl("Католицизм", state.selectedModules.has("name_days_catholic"), checked => {
+      if (checked) state.selectedModules.add("name_days_catholic");
+      else state.selectedModules.delete("name_days_catholic");
+      moduleSelectionChanged();
+    }));
+    nameDays.append(nameDayChildren);
+    container.append(nameDays);
+
+    const governmentSelected = anyModuleSelected(GOVERNMENT_MODULES);
+    container.append(makeCheckboxControl("Государственные", governmentSelected, checked => {
+      if (checked) {
+        if (!anyModuleSelected(GOVERNMENT_MODULES)) state.selectedModules.add("government_russia");
+      } else {
+        replaceModuleSelection(GOVERNMENT_MODULES, null);
+      }
+      moduleSelectionChanged();
+    }));
+    if (governmentSelected) {
+      const children = document.createElement("div");
+      children.className = "module-children";
+      children.append(makeRadioControl("Россия", "government-country", state.selectedModules.has("government_russia"), () => {
+        replaceModuleSelection(GOVERNMENT_MODULES, "government_russia");
+        moduleSelectionChanged();
+      }));
+      children.append(makeRadioControl("Украина", "government-country", state.selectedModules.has("government_ukraine"), () => {
+        replaceModuleSelection(GOVERNMENT_MODULES, "government_ukraine");
+        moduleSelectionChanged();
+      }));
+      container.append(children);
+    }
+
+    container.append(makeModuleOption("international", "Международные"));
+    container.append(makeModuleOption("professional", "Профессиональные"));
+    container.append(makeModuleOption("fun_dates", "Забавные даты"));
+  }
+  function makeCheckboxControl(label, checked, onChange) {
+    return makeControl(label, "checkbox", checked, "", onChange);
+  }
+  function makeRadioControl(label, name, checked, onChange) {
+    return makeControl(label, "radio", checked, name, onChange);
+  }
+  function makeControl(label, type, checked, name, onChange) {
     const row = document.createElement("label");
     row.className = "module-option";
     const input = document.createElement("input");
-    input.type = "checkbox";
-    input.checked = state.selectedModules.has(id);
-    input.value = id;
+    input.type = type;
+    input.checked = checked;
+    if (name) input.name = name;
     input.addEventListener("change", () => {
-      if (input.checked) state.selectedModules.add(id); else state.selectedModules.delete(id);
-      saveSettings();
-      state.monthEvents = [];
-      renderCalendar();
-      if (!getSelectedModules().length) {
-        state.monthRequestId++;
-        state.dayRequestId++;
-        if (state.monthController) state.monthController.abort();
-        if (state.dayController) state.dayController.abort();
-        calendarStatus.textContent = "";
-        dayStatus.textContent = "";
-        state.dayEvents = [];
-        renderDayEvents();
-        renderCalendar();
-        return;
-      }
-      loadMonthEvents();
-      loadDayEvents();
+      if (type === "checkbox" || input.checked) onChange(input.checked);
     });
     const text = document.createElement("span");
     text.textContent = label;
     row.append(input, text);
     return row;
+  }
+  function moduleSelectionChanged() {
+    saveSettings();
+    renderModuleList();
+    state.monthEvents = [];
+    renderCalendar();
+    if (!getSelectedModules().length) {
+      state.monthRequestId++;
+      state.dayRequestId++;
+      if (state.monthController) state.monthController.abort();
+      if (state.dayController) state.dayController.abort();
+      calendarStatus.textContent = "";
+      dayStatus.textContent = "";
+      state.dayEvents = [];
+      renderDayEvents();
+      renderCalendar();
+      return;
+    }
+    loadMonthEvents();
+    loadDayEvents();
+  }
+  function makeModuleOption(id, label) {
+    return makeCheckboxControl(label, state.selectedModules.has(id), checked => {
+      if (checked) state.selectedModules.add(id);
+      else state.selectedModules.delete(id);
+      moduleSelectionChanged();
+    });
   }
   function renderDayHeading() {
     const date = state.selectedDate;

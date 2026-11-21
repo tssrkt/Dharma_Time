@@ -65,6 +65,13 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .module-option { display: flex; align-items: center; gap: 10px; min-height: 37px; padding: 6px 8px; border-radius: 9px; cursor: pointer; font-size: 13px; line-height: 1.35; }
 .module-option:hover { background: #f8f6f0; }
 .module-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); flex: 0 0 auto; }
+.module-children { margin: 1px 0 5px 18px; padding-left: 8px; border-left: 1px solid #e7e2d7; }
+.module-subchildren { margin-top: 0; margin-bottom: 3px; }
+.module-children .module-option { min-height: 32px; padding-top: 4px; padding-bottom: 4px; }
+.module-folder { margin: 2px 0; }
+.module-folder > summary { cursor: pointer; list-style: disclosure-closed; color: var(--ink); font-size: 13px; line-height: 1.35; padding: 9px 8px; border-radius: 9px; }
+.module-folder[open] > summary { list-style: disclosure-open; }
+.module-folder > summary:hover { background: #f8f6f0; }
 .settings-footer { display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 12px; border-top: 1px solid #f0ece3; }
 .text-button { border: 0; padding: 4px 0; background: transparent; color: var(--green); font-size: 12px; cursor: pointer; }
 .day-panel { min-height: 480px; padding: 27px 28px 24px; }
