@@ -707,17 +707,17 @@
     dayEvents.replaceChildren();
     const hasAny = state.dayEvents.length > 0;
     const showMoonInfo = state.selectedModules.has("moon") && Boolean(state.moonInfo) && state.activeEventCategory === "astronomy";
-    const showPhugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && Boolean(state.phugpaInfo);
+    const showPhugpaInfo = state.activeEventCategory === "buddhism" && state.selectedModules.has("tibet") && state.phugpaDaily && Boolean(state.phugpaInfo);
     const showPanchangaInfo = state.activeEventCategory === "hindu" && (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo);
     $$("#event-categories .image-tab").forEach(button => {
       const category = button.dataset.category;
-      const enabled = state.dayEvents.some(event => categoryForEvent(event) === category) || (category === "astronomy" && state.selectedModules.has("moon") && Boolean(state.moonInfo)) || (category === "hindu" && (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo));
+      const enabled = state.dayEvents.some(event => categoryForEvent(event) === category) || (category === "astronomy" && state.selectedModules.has("moon") && Boolean(state.moonInfo)) || (category === "buddhism" && state.selectedModules.has("tibet") && state.phugpaDaily && Boolean(state.phugpaInfo)) || (category === "hindu" && (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo));
       const active = category === state.activeEventCategory;
       button.disabled = !enabled;
       button.classList.toggle("is-active", active && enabled);
       button.setAttribute("aria-pressed", String(active && enabled));
     });
-    dayEmpty.hidden = filtered.length > 0 || showMoonInfo || (showPhugpaInfo && !hasAny) || (showPanchangaInfo && !hasAny);
+    dayEmpty.hidden = filtered.length > 0 || showMoonInfo || showPhugpaInfo || showPanchangaInfo;
     if (!hasAny) {
       if (!getSelectedModules().length) dayEmpty.textContent = "Включите хотя бы один календарь в настройках.";
       else if (showPhugpaInfo || showPanchangaInfo) dayEmpty.textContent = "";
@@ -887,6 +887,8 @@
       state.dayEvents = normalizeEvents(payload).filter(event => eventOccursOn(event, state.selectedDate));
       const available = new Set(state.dayEvents.map(categoryForEvent));
       if (state.selectedModules.has("moon") && state.moonInfo) available.add("astronomy");
+      if (state.selectedModules.has("tibet") && state.phugpaDaily && state.phugpaInfo) available.add("buddhism");
+      if ((state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && state.panchangaInfo) available.add("hindu");
       if (!available.has(state.activeEventCategory)) state.activeEventCategory = CATEGORY_ORDER.find(key => available.has(key)) || "astronomy";
       dayStatus.textContent = "";
       renderDayEvents();
