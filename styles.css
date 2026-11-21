@@ -42,7 +42,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .calendar-day.has-events::before { content: ""; position: absolute; top: 50%; left: 50%; width: 38px; height: 38px; max-width: calc(100% - 4px); max-height: calc(100% - 4px); border: 1.5px solid var(--green); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .calendar-day.is-moon-phase { isolation: isolate; font-size: 14px; line-height: 1; padding: 0; }
 .calendar-day.is-moon-phase::before { content: attr(data-moon-phase-emoji); position: absolute; top: 50%; left: 50%; width: auto; height: auto; max-width: none; max-height: none; border: 0; border-radius: 0; transform: translate(-50%, -50%); font-size: 37px; line-height: 1; opacity: .75; z-index: 0; pointer-events: none; }
-.calendar-day .day-number { position: relative; z-index: 1; }
+.calendar-day.is-moon-phase::after { content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; border: 1.5px solid var(--green); border-radius: 50%; transform: translate(-50%, -50%); opacity: 1; z-index: 0; pointer-events: none; }
+.calendar-day .day-number { position: relative; z-index: 1; opacity: 1; text-shadow: -1px 0 #fff, 1px 0 #fff, 0 -1px #fff, 0 1px #fff, 0 0 3px #fff, 0 0 5px rgba(255,255,255,.95); }
 .calendar-day.is-selected { border-color: var(--green); background: var(--soft-green); color: var(--green-dark); font-weight: 700; }
 .calendar-day.is-selected.is-today { outline: 2px solid var(--gold); outline-offset: -3px; }
 .calendar-day.has-events { z-index: 1; }
@@ -148,6 +149,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .calendar-day { border-radius: 9px; font-size: 13px; }
   .calendar-day.has-events::before { width: 35px; height: 35px; }
   .calendar-day.is-moon-phase::before { font-size: 34px; }
+  .calendar-day.is-moon-phase::after { width: 39px; height: 39px; }
   .settings-panel { padding: 13px 12px; }
   .category-tabs { gap: 6px; }
   .image-tab { min-height: 53px; border-radius: 12px; }
