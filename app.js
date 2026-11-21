@@ -767,8 +767,10 @@
     const cityValue = extra.display_city || extra[locale === "en" ? "reference_city_en" : "reference_city_ru"];
     const city = typeof cityValue === "string" ? cityValue.trim() : "";
     if (city) lines.push((locale === "en" ? "City: " : "Город: ") + city);
+    const module = String(event && event.module || "").toLowerCase();
+    if (module === "myanmar" || module === "burma") return lines.join("\n");
 
-    const tibetan = event && event.module === "tibet" ? extra : null;
+    const tibetan = event && module === "tibet" ? extra : null;
     if (tibetan && ["tibetan_year", "tibetan_month", "lunar_day", "tibetan_year_animal", "tibetan_year_element", "tibetan_month_animal", "tibetan_month_element", "tibetan_day_animal", "tibetan_day_element"].every(key => Number.isInteger(tibetan[key]))) {
       const animalsRu = ["Мыши", "Быка", "Тигра", "Кролика", "Дракона", "Змеи", "Лошади", "Овцы", "Обезьяны", "Птицы", "Собаки", "Свиньи"];
       const animalsEn = ["Mouse", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Sheep", "Monkey", "Bird", "Dog", "Pig"];
@@ -806,6 +808,7 @@
     }
 
     const lunar = event && event.lunar_info && typeof event.lunar_info === "object" ? event.lunar_info : {};
+    const hiddenLunarFields = module === "north_india" ? new Set(["tithi", "paksha"]) : new Set();
     const lunarLabels = {
       lunar_day: locale === "en" ? "Lunar day" : "Лунный день",
       lunar_phase: locale === "en" ? "Lunar phase" : "Фаза Луны",
@@ -827,7 +830,7 @@
     Object.entries(lunarLabels).forEach(([key, label]) => {
       const value = lunar[key];
       const alreadyShownInTibetanBlock = Boolean(tibetan) && ["lunar_day", "tibetan_month", "tibetan_lunar_day"].includes(key);
-      if (value !== null && value !== undefined && value !== "" && !alreadyShownInTibetanBlock && !lines.some(line => line.startsWith(label + ":"))) {
+      if (!hiddenLunarFields.has(key) && value !== null && value !== undefined && value !== "" && !alreadyShownInTibetanBlock && !lines.some(line => line.startsWith(label + ":"))) {
         lines.push(label + ": " + String(value));
       }
     });
@@ -902,7 +905,9 @@
       const title = document.createElement("h3");
       title.className = "event-title";
       const eventEmoji = String(event.emoji || "");
-      title.textContent = (eventEmoji ? eventEmoji + " " : "") + String(event.title || "").toLocaleUpperCase(locale);
+      const eventTitle = String(event.title || "");
+      const preserveTitleCase = String(event.module || "").toLowerCase() === "north_india" && /ekadashi/i.test(String(event.id || "") + " " + eventTitle);
+      title.textContent = (eventEmoji ? eventEmoji + " " : "") + (preserveTitleCase ? eventTitle : eventTitle.toLocaleUpperCase(locale));
       title.hidden = !eventEmoji && !event.title;
       const dates = document.createElement("p");
       dates.className = "event-date";
