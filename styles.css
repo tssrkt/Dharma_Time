@@ -20,12 +20,12 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .site-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 26px 4px 24px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); font-size: 25px; font-weight: 600; letter-spacing: -.5px; }
 .brand-mark { display: block; width: 38px; height: 38px; object-fit: contain; flex: 0 0 auto; }
-.city-picker { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--muted); font-size: 14px; }
+.city-picker { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--muted); font-size: 16px; }
 .city-picker label { white-space: nowrap; }
-.city-search-wrap { position: relative; width: clamp(85px, 11vw, 130px); }
-#city-search { display: block; width: 100%; min-width: 0; padding: 10px 0; border: 0; border-radius: 0; outline: none; box-shadow: none; background: var(--paper); color: var(--ink); font: inherit; }
+.city-search-wrap { position: relative; flex: 0 0 auto; width: max-content; min-width: 20px; }
+#city-search { display: block; width: auto; min-width: 20px; max-width: none; padding: 10px 0; border: 0; border-radius: 0; outline: none; box-shadow: none; background: var(--paper); color: var(--ink); font: inherit; text-align: right; white-space: nowrap; }
 #city-search:focus, #city-search:focus-visible { outline: none; box-shadow: none; }
-.city-results { position: absolute; z-index: 50; top: calc(100% + 5px); left: 0; right: 0; max-height: 300px; overflow-y: auto; margin: 0; padding: 5px; list-style: none; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); box-shadow: 0 12px 30px rgba(37,53,47,.15); }
+.city-results { position: absolute; z-index: 50; top: calc(100% + 5px); left: auto; right: 0; width: max-content; min-width: min(220px, 80vw); max-width: min(320px, 80vw); max-height: 300px; overflow-y: auto; margin: 0; padding: 5px; list-style: none; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); box-shadow: 0 12px 30px rgba(37,53,47,.15); }
 .city-results[hidden] { display: none; }
 .city-result { width: 100%; padding: 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; font-size: 13px; line-height: 1.4; }
 .city-result:hover, .city-result:focus-visible { background: var(--soft-green); }
@@ -132,9 +132,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 @media (max-width: 850px) {
   .app-shell { width: min(660px, calc(100% - 28px)); }
   .site-header { padding: 20px 2px; }
-  .city-picker { gap: 6px; font-size: 12px; }
-  .city-search-wrap { width: min(21vw, 110px); }
-  #city-search { padding: 9px 10px; }
+  .city-picker { gap: 6px; font-size: 14px; }
+  #city-search { padding: 9px 0; }
   .workspace { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .day-panel { min-height: 0; padding: 22px 20px; }
   .calendar-panel { padding: 20px 18px 15px; }
@@ -154,7 +153,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .brand { font-size: 22px; }
   .brand-mark { width: 34px; height: 34px; }
   .city-picker { flex-wrap: wrap; justify-content: flex-end; }
-  .city-search-wrap { width: 50%; }
   .calendar-panel { padding: 17px 11px 13px; border-radius: 16px; }
   .month-toolbar { grid-template-columns: 36px 1fr 36px; gap: 7px; margin-bottom: 19px; }
   .icon-button { width: 36px; height: 36px; }

@@ -1055,8 +1055,20 @@
   function setupCityPicker() {
     const input = $("#city-search");
     const list = $("#city-results");
-    if (!input || !list) return;
-    input.value = state.settings.cityName || DEFAULTS.cityName;
+    const wrap = input && input.closest(".city-search-wrap");
+    if (!input || !list || !wrap) return;
+    const cityName = state.settings.cityName || DEFAULTS.cityName;
+    input.value = state.settings.cityDisplayName || (cityName === DEFAULTS.cityName ? "Москва (Россия)" : cityName);
+    const measureCanvas = document.createElement("canvas");
+    const measureContext = measureCanvas.getContext("2d");
+    function resizeInput() {
+      if (measureContext) measureContext.font = getComputedStyle(input).font;
+      const textWidth = measureContext ? measureContext.measureText(input.value).width : input.value.length * 9;
+      const width = Math.max(20, Math.ceil(textWidth + 2));
+      input.style.width = width + "px";
+      wrap.style.width = width + "px";
+    }
+    resizeInput();
     let searchTimer = null;
     let controller = null;
     let searchSequence = 0;
@@ -1072,11 +1084,15 @@
         button.className = "city-result";
         button.textContent = city.name;
         button.addEventListener("click", () => {
-          state.settings.cityName = city.name.split(",")[0].trim();
+          const nameParts = String(city.name || "").split(",").map(part => part.trim()).filter(Boolean);
+          state.settings.cityName = nameParts[0] || String(city.name || "").trim();
+          const country = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
+          state.settings.cityDisplayName = country ? state.settings.cityName + " (" + country + ")" : state.settings.cityName;
           state.settings.latitude = String(city.latitude);
           state.settings.longitude = String(city.longitude);
           state.settings.timezone = city.timezone;
-          input.value = state.settings.cityName;
+          input.value = state.settings.cityDisplayName;
+          resizeInput();
           saveSettings();
           closeResults();
           state.monthEvents = [];
@@ -1096,6 +1112,7 @@
       input.setAttribute("aria-expanded", String(results.length > 0));
     }
     input.addEventListener("input", () => {
+      resizeInput();
       if (searchTimer) clearTimeout(searchTimer);
       if (controller) controller.abort();
       const query = input.value.trim();
@@ -1112,7 +1129,10 @@
         }
       }, 250);
     });
-    input.addEventListener("focus", () => { if (input.value.trim().length >= 2) input.dispatchEvent(new Event("input")); });
+    input.addEventListener("focus", () => {
+      const selectedDisplayName = state.settings.cityDisplayName || (state.settings.cityName === DEFAULTS.cityName ? "Москва (Россия)" : state.settings.cityName);
+      if (input.value.trim().length >= 2 && input.value !== selectedDisplayName) input.dispatchEvent(new Event("input"));
+    });
     input.addEventListener("keydown", event => { if (event.key === "Escape") closeResults(); });
     document.addEventListener("click", event => { if (!event.target.closest(".city-picker")) closeResults(); });
   }
