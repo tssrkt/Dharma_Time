@@ -407,7 +407,7 @@
           row.className = "module-option-row";
           row.append(parentOption);
           if (state.selectedModules.has(id)) {
-            const child = makeCheckboxControl(id === "tibet" ? "\u{1FAAC} \u041f\u0443\u0433\u043f\u0430" : "Сок-Вонг", id === "tibet" ? state.phugpaDaily : state.socVong, checked => {
+            const child = makeCheckboxControl(id === "tibet" ? "\u041f\u0443\u0433\u043f\u0430" : "Сок-Вонг", id === "tibet" ? state.phugpaDaily : state.socVong, checked => {
               if (id === "tibet") state.phugpaDaily = checked;
               else state.socVong = checked;
               moduleSelectionChanged();
@@ -730,10 +730,10 @@
       card.className = "event-card phugpa-info-card";
       const title = document.createElement("h3");
       title.className = "event-title";
-      title.textContent = "\u{1FAAC} \u041f\u0423\u0413\u041f\u0410 \u2014 \u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f";
+      title.textContent = "\u{1F538} \u041f\u0423\u0413\u041f\u0410 (\u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f)";
       const details = document.createElement("p");
       details.className = "event-description phugpa-summary";
-      details.textContent = String(info.description || "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u041f\u0443\u0433\u043f\u0430 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e.");
+      details.textContent = String(info.description || "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u041f\u0443\u0433\u043f\u0430 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e.").replace(/^\u{1F538}\s*/u, "");
       card.append(title, details);
       dayEvents.append(card);
     }
