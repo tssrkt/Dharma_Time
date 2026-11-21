@@ -215,6 +215,37 @@
     if (["astronomy", "astronomical"].includes(tradition)) return "astronomy";
     return "misc";
   }
+  function eventDescription(event) {
+    const supplied = String(event.description || event.short_description || "").trim();
+    if (supplied) return supplied;
+
+    const extra = event.extra && typeof event.extra === "object" ? event.extra : {};
+    const module = String(event.module || "");
+    const kind = String(extra.kind || "");
+    if (module === "moon") {
+      const phaseDescriptions = {
+        new_moon: "Новолуние: освещённая сторона Луны обращена от Земли, поэтому Луна обычно почти не видна на ночном небе.",
+        first_quarter: "Первая четверть: Луна растёт, и с Земли видна примерно половина её освещённого диска.",
+        full_moon: "Полнолуние: видимый с Земли диск Луны освещён почти полностью.",
+        last_quarter: "Последняя четверть: Луна убывает, и с Земли видна примерно половина её освещённого диска."
+      };
+      if (phaseDescriptions[kind]) return phaseDescriptions[kind];
+    }
+    if (module === "sun" && kind === "solar_sign_ingress") {
+      return "Дата перехода Солнца в следующий знак тропического зодиака по выбранному календарю.";
+    }
+    if (module.startsWith("name_days_") && Array.isArray(extra.names) && extra.names.length) {
+      return "Именины по выбранному календарю. Имена: " + extra.names.join(", ") + ".";
+    }
+
+    const categoryDescriptions = {
+      astronomy: "Астрономическое событие, рассчитанное для выбранной даты и часового пояса.",
+      buddhism: "Событие отмечено в календаре буддийской традиции. Подробное пояснение источник не предоставил.",
+      hindu: "Событие отмечено в индуистском календаре. Подробное пояснение источник не предоставил.",
+      misc: "Дата отмечена в выбранном календаре. Подробное пояснение источник не предоставил."
+    };
+    return categoryDescriptions[categoryForEvent(event)] || categoryDescriptions.misc;
+  }
   function iconForCategory(category) { return ({ astronomy: "☾", buddhism: "☸", hindu: "ॐ", misc: "✿" })[category] || "✿"; }
   function renderCalendar() {
     monthTitle.textContent = titleCase(monthName(state.month));
@@ -343,8 +374,11 @@
       button.setAttribute("aria-pressed", String(active && enabled));
     });
     dayEmpty.hidden = filtered.length > 0;
-    if (!hasAny) dayEmpty.textContent = getSelectedModules().length ? "На выбранную дату событий не найдено." : "Включите хотя бы один календарь в настройках.";
-    else if (!filtered.length) dayEmpty.textContent = "В этой категории нет событий на выбранную дату. Выберите другую вкладку.";
+    if (!hasAny) {
+      if (!getSelectedModules().length) dayEmpty.textContent = "Включите хотя бы один календарь в настройках.";
+      else if (state.monthEvents.length) dayEmpty.textContent = "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.";
+      else dayEmpty.textContent = "На выбранную дату событий не найдено.";
+    } else if (!filtered.length) dayEmpty.textContent = "В этой категории нет событий на выбранную дату. Выберите другую вкладку.";
     filtered.forEach((event, index) => {
       const card = document.createElement("article");
       card.className = "event-card";
@@ -357,10 +391,10 @@
       const end = event.end_date || event.end;
       dates.textContent = start && end && String(start).slice(0, 10) !== String(end).slice(0, 10) ? String(start).slice(0, 10) + " — " + String(end).slice(0, 10) : "";
       if (!dates.textContent) dates.hidden = true;
+      const descriptionText = eventDescription(event);
       const summary = document.createElement("p");
       summary.className = "event-summary";
-      summary.textContent = String(event.short_description || event.description || "");
-      const descriptionText = String(event.description || event.short_description || "");
+      summary.textContent = String(event.short_description || event.description || descriptionText);
       const isExpanded = state.expandedEvents.has(String(event.id || index));
       card.append(title, dates, summary);
       if (isExpanded) {
@@ -402,6 +436,7 @@
       state.monthEvents = eventsForMonth(normalizeEvents(payload), state.month);
       calendarStatus.textContent = "";
       renderCalendar();
+      if (!state.dayEvents.length) renderDayEvents();
     } catch (error) {
       if (requestId !== state.monthRequestId || error.name === "AbortError") return;
       state.monthEvents = [];
