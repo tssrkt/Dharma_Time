@@ -70,6 +70,8 @@ test("Calendar name days use a plain-text Именины label and all tooltip t
   assert.match(css, /\.event-tooltip, \.event-tooltip \* \{ font-weight: 400; \}/);
   assert.match(css, /\.event-tooltip-list \{[^}]*list-style: disc;/);
   assert.match(css, /calendar-day\.has-regular-events::before/);
+  assert.match(css, /\.calendar-day\.is-moon-phase::after \{[^}]*border-radius: 50%/);
+  assert.doesNotMatch(css, /\.calendar-day\.is-moon-phase:not\(\.has-name-days\)::after/);
   assert.doesNotMatch(css, /name-day-marker/);
   assert.doesNotMatch(css, /calendar-day\.has-events:not\(\.has-name-days\)::before/);
 });
