@@ -60,13 +60,15 @@ test("Calendar name days use a plain-text Именины label and all tooltip t
   assert.match(source, /const hasRegularEvents = dayEvents\.some\(event => !isNameDayEvent\(event\)\)/);
   assert.doesNotMatch(source, /name-day-marker/);
   assert.match(source, /const names = Array\.from\(new Set\(dayEvents/);
-  assert.match(source, /document\.createElement\("span"\)/);
-  assert.match(source, /Именины: /);
+  assert.match(source, /if \(hasNameDays \|\| regularEvents\.length\)/);
+  assert.match(source, /const item = document\.createElement\("li"\);\s*item\.textContent = \(locale === "en" \? "Name days: " : "Именины: "\) \+ names\.join\(", "\);\s*list\.append\(item\);/);
   assert.match(source, /names\.join\(", "\)/);
   assert.match(source, /dayEvents\.filter\(event => !isNameDayEvent\(event\)\)/);
+  assert.doesNotMatch(source, /event-tooltip-name-days/);
   assert.doesNotMatch(source, /Сегодня именины|Name days today|createElement\("strong"\)/);
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
   assert.match(css, /\.event-tooltip, \.event-tooltip \* \{ font-weight: 400; \}/);
+  assert.match(css, /\.event-tooltip-list \{[^}]*list-style: disc;/);
   assert.match(css, /calendar-day\.has-regular-events::before/);
   assert.doesNotMatch(css, /name-day-marker/);
   assert.doesNotMatch(css, /calendar-day\.has-events:not\(\.has-name-days\)::before/);

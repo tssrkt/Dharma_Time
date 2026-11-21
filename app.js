@@ -375,20 +375,19 @@
         const tooltip = document.createElement("span");
         tooltip.className = "event-tooltip";
         tooltip.setAttribute("aria-hidden", "true");
-        if (hasNameDays) {
-          const names = Array.from(new Set(dayEvents
-            .filter(isNameDayEvent)
-            .map(event => String(event.title || "").replace(/^[^:]+:\s*/u, "").replace(/[.!\s]+$/u, "").trim())
-            .filter(Boolean)));
-          const nameDaysLabel = document.createElement("span");
-          nameDaysLabel.className = "event-tooltip-name-days";
-          nameDaysLabel.textContent = (locale === "en" ? "Name days: " : "Именины: ") + names.join(", ");
-          tooltip.append(nameDaysLabel);
-        }
         const regularEvents = dayEvents.filter(event => !isNameDayEvent(event));
-        if (regularEvents.length) {
+        if (hasNameDays || regularEvents.length) {
           const list = document.createElement("ul");
           list.className = "event-tooltip-list";
+          if (hasNameDays) {
+            const names = Array.from(new Set(dayEvents
+              .filter(isNameDayEvent)
+              .map(event => String(event.title || "").replace(/^[^:]+:\s*/u, "").replace(/[.!\s]+$/u, "").trim())
+              .filter(Boolean)));
+            const item = document.createElement("li");
+            item.textContent = (locale === "en" ? "Name days: " : "Именины: ") + names.join(", ");
+            list.append(item);
+          }
           regularEvents.forEach(event => {
             const item = document.createElement("li");
             item.textContent = String(event.title || "");
