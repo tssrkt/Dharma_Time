@@ -102,6 +102,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .event-title { margin: 0 0 8px; font-size: 19px; line-height: 1.5; font-weight: 750; letter-spacing: .015em; }
 .event-summary, .event-description { margin: 0; color: #65736a; font-size: 17px; line-height: 1.7; text-align: justify; overflow-wrap: anywhere; }
 .event-description { margin-top: 9px; white-space: pre-line; }
+.event-collapsed { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; white-space: pre-line; }
 .moon-summary { white-space: pre-line; text-align: left; }
 .event-date { margin: 0 0 7px; color: #8a948d; font-size: 11px; }
 .event-toggle { margin-top: 11px; border: 0; background: none; color: var(--green); cursor: pointer; font-size: 12px; font-weight: 700; padding: 3px 0; }

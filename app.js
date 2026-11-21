@@ -710,15 +710,11 @@
     dayWeekday.textContent = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date).toLocaleUpperCase(locale);
     dayTitle.textContent = titleCase(new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date)) + (sameDay(date, today) ? " (сегодня)" : "");
   }
-  function appendDailySummaryToggle(card, details, fullText, id) {
-    const isExpanded = state.expandedEvents.has(id);
-    const summaryText = fullText.length > 140 ? fullText.slice(0, 137).trimEnd() + ":" : fullText;
-    details.textContent = isExpanded ? fullText : summaryText;
-    dayEvents.append(card);
-
+  function hasMoreThanThreeLines(text, card, className = "event-description") {
+    if (!text) return false;
     const probe = document.createElement("p");
-    probe.className = "event-description";
-    probe.textContent = fullText;
+    probe.className = className.split(/\s+/).filter(name => name !== "event-collapsed").join(" ");
+    probe.textContent = text;
     Object.assign(probe.style, {
       position: "fixed",
       left: "-10000px",
@@ -731,12 +727,20 @@
       pointerEvents: "none"
     });
     document.body.append(probe);
-    const probeStyle = getComputedStyle(probe);
-    const lineHeight = parseFloat(probeStyle.lineHeight);
-    const hasMoreThanFiveLines = lineHeight > 0 && probe.scrollHeight > lineHeight * 5 + 1;
+    const lineHeight = parseFloat(getComputedStyle(probe).lineHeight);
+    const hasMore = lineHeight > 0 && probe.scrollHeight > lineHeight * 3 + 1;
     probe.remove();
+    return hasMore;
+  }
 
-    if (hasMoreThanFiveLines || isExpanded) {
+  function appendDailySummaryToggle(card, details, fullText, id) {
+    const isExpanded = state.expandedEvents.has(id);
+    details.classList.toggle("event-collapsed", !isExpanded);
+    details.textContent = fullText;
+    dayEvents.append(card);
+
+    const hasMoreThanThree = hasMoreThanThreeLines(fullText, card, details.className);
+    if (hasMoreThanThree || isExpanded) {
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "event-toggle";
@@ -827,14 +831,12 @@
       const descriptionText = formatDescription(rawDescription);
       const summary = document.createElement("p");
       summary.className = "event-summary";
-      const suppliedSummary = String(event.short_description || "").trim();
-      const summaryText = suppliedSummary && suppliedSummary !== rawDescription
-        ? suppliedSummary
-        : (rawDescription.length > 140 ? rawDescription.slice(0, 137).trimEnd() + "…" : rawDescription);
-      summary.textContent = summaryText;
-      const isExpanded = state.expandedEvents.has(String(event.id || index));
+      summary.textContent = descriptionText;
+      const eventId = String(event.id || index);
+      const isExpanded = state.expandedEvents.has(eventId);
+      summary.classList.toggle("event-collapsed", !isExpanded);
       card.append(title, dates);
-      if (!isExpanded && summaryText) card.append(summary);
+      if (!isExpanded && descriptionText) card.append(summary);
       if (isExpanded && descriptionText) {
         const description = document.createElement("p");
         description.className = "event-description";
@@ -843,31 +845,8 @@
       }
       dayEvents.append(card);
 
-      const probe = document.createElement("p");
-      probe.className = "event-description";
-      probe.textContent = descriptionText;
-      Object.assign(probe.style, {
-        position: "fixed",
-        left: "-10000px",
-        top: "0",
-        width: Math.max(0, card.clientWidth
-          - parseFloat(getComputedStyle(card).paddingLeft)
-          - parseFloat(getComputedStyle(card).paddingRight)) + "px",
-        margin: "0",
-        visibility: "hidden",
-        pointerEvents: "none"
-      });
-      document.body.append(probe);
-      const probeStyle = getComputedStyle(probe);
-      const lineHeight = parseFloat(probeStyle.lineHeight);
-      const hasMoreThanFiveLines = lineHeight > 0 && probe.scrollHeight > lineHeight * 5 + 1;
-      probe.remove();
-
-      if (!hasMoreThanFiveLines && !suppliedSummary && !isExpanded) {
-        summary.textContent = descriptionText;
-      }
-
-      if (hasMoreThanFiveLines || isExpanded) {
+      const hasMoreThanThree = hasMoreThanThreeLines(descriptionText, card, "event-description");
+      if (hasMoreThanThree || isExpanded) {
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = "event-toggle";
