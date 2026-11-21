@@ -322,7 +322,23 @@
     const previousDays = new Date(year, month, 0).getDate();
     const cells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
     const monthEventKeys = new Set();
+    const moonPhasesByDate = new Map();
+    const moonPhaseDefinitions = [
+      { tag: "full_moon", emoji: "🌕", label: "Полнолуние" },
+      { tag: "last_quarter", emoji: "🌗", label: "Последняя четверть" },
+      { tag: "new_moon", emoji: "🌑", label: "Новолуние" },
+      { tag: "first_quarter", emoji: "🌓", label: "Первая четверть" }
+    ];
     state.monthEvents.forEach(event => {
+      const tags = Array.isArray(event.tags) ? event.tags : [];
+      const phase = moonPhaseDefinitions.find(item => tags.includes("astronomy." + item.tag) || tags.includes(item.tag) || String(event.id || "").includes(item.tag));
+      if (phase && event.module === "moon") {
+        const phaseDates = Array.isArray(event.display_dates) && event.display_dates.length ? event.display_dates : [event.start_date || event.start];
+        phaseDates.forEach(value => {
+          const date = parseDate(value);
+          if (date && date.getFullYear() === year && date.getMonth() === month) moonPhasesByDate.set(dateKey(date), phase);
+        });
+      }
       if (Array.isArray(event.display_dates)) event.display_dates.forEach(value => {
         const date = parseDate(value);
         if (date && date.getFullYear() === year && date.getMonth() === month) monthEventKeys.add(dateKey(date));
@@ -343,14 +359,17 @@
       button.className = "calendar-day";
       button.setAttribute("role", "gridcell");
       button.setAttribute("aria-pressed", String(sameDay(date, state.selectedDate)));
-      button.textContent = String(date.getDate());
+      const moonPhase = moonPhasesByDate.get(key);
+      button.textContent = moonPhase ? moonPhase.emoji : String(date.getDate());
+      if (moonPhase) button.classList.add("is-moon-phase");
       if (outside) button.classList.add("is-outside");
       if (sameDay(date, today)) button.classList.add("is-today");
       if (sameDay(date, state.selectedDate)) button.classList.add("is-selected");
       if (monthEventKeys.has(key)) {
         const dayEvents = state.monthEvents.filter(event => eventOccursOn(event, date));
         button.classList.add("has-events");
-        button.setAttribute("aria-label", longDate(date) + ". События: " + dayEvents.map(event => String(event.title || "Событие")).join("; "));
+        const phaseLabel = moonPhase ? " Фаза Луны: " + moonPhase.label + "." : "";
+        button.setAttribute("aria-label", longDate(date) + "." + phaseLabel + " События: " + dayEvents.map(event => String(event.title || "Событие")).join("; "));
         const tooltip = document.createElement("span");
         tooltip.className = "event-tooltip";
         tooltip.setAttribute("aria-hidden", "true");
