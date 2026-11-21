@@ -66,6 +66,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .module-group { border-top: 1px solid #f0ece3; padding-top: 9px; }
 .module-group:first-child { border-top: 0; padding-top: 0; }
 .module-group summary { cursor: pointer; color: #53645a; font-size: 12px; font-weight: 700; padding: 5px 1px 7px; }
+.module-option-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.module-option-row > .module-option { flex: 1 1 auto; min-width: 0; }
+.module-option-row .module-option-child { flex: 0 0 auto; white-space: nowrap; padding-left: 5px; padding-right: 5px; }
 .module-option { display: flex; align-items: center; gap: 10px; min-height: 37px; padding: 6px 8px; border-radius: 9px; cursor: pointer; font-size: 13px; line-height: 1.35; }
 .module-option:hover { background: #f8f6f0; }
 .module-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); flex: 0 0 auto; }

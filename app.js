@@ -62,6 +62,9 @@
     monthEvents: [],
     dayEvents: [],
     moonInfo: null,
+    phugpaInfo: null,
+    phugpaDaily: false,
+    socVong: false,
     monthRequestId: 0,
     dayRequestId: 0,
     monthController: null,
@@ -109,6 +112,8 @@
       const validIds = new Set(Object.values(CATEGORIES).flatMap(group => group.modules.map(([id]) => id)));
       const selected = Array.isArray(stored.selectedModules) ? stored.selectedModules.filter(id => validIds.has(id)) : DEFAULTS.selectedModules;
       state.selectedModules = new Set(selected);
+      state.phugpaDaily = Boolean(stored.phugpaDaily) && state.selectedModules.has("tibet");
+      state.socVong = Boolean(stored.socVong) && state.selectedModules.has("vietnam");
       normalizeExclusiveModuleGroups();
       state.settings = { ...DEFAULTS, ...stored, locale };
       state.settings.selectedModules = Array.from(state.selectedModules);
@@ -120,6 +125,8 @@
   function saveSettings() {
     state.settings.activeSettingsCategory = state.activeSettingsCategory;
     state.settings.selectedModules = Array.from(state.selectedModules);
+    state.settings.phugpaDaily = state.phugpaDaily && state.selectedModules.has("tibet");
+    state.settings.socVong = state.socVong && state.selectedModules.has("vietnam");
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings)); } catch (_) { /* Storage can be unavailable in private browsing. */ }
   }
   function getSelectedModules() { return Array.from(state.selectedModules).sort(); }
@@ -133,6 +140,8 @@
     params.set("modules", modules.join(","));
     params.set("locale", state.settings.locale || locale);
     params.set("user_timezone", currentTimezone());
+    if (state.selectedModules.has("tibet") && state.phugpaDaily) params.set("phugpa_daily", "true");
+    if (state.selectedModules.has("vietnam") && state.socVong) params.set("soc_vong", "true");
     if (state.settings.cityName && state.settings.latitude !== "" && state.settings.longitude !== "") {
       const lat = Number(state.settings.latitude), lon = Number(state.settings.longitude);
       if (Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
@@ -346,7 +355,26 @@
         const summary = document.createElement("summary");
         summary.textContent = group.label;
         details.append(summary);
-        group.modules.forEach(([id, label]) => details.append(makeModuleOption(id, label)));
+        group.modules.forEach(([id, label]) => {
+          const parentOption = makeModuleOption(id, label);
+          if (id !== "tibet" && id !== "vietnam") {
+            details.append(parentOption);
+            return;
+          }
+          const row = document.createElement("div");
+          row.className = "module-option-row";
+          row.append(parentOption);
+          if (state.selectedModules.has(id)) {
+            const child = makeCheckboxControl(id === "tibet" ? "Пугпа" : "Сок-Вонг", id === "tibet" ? state.phugpaDaily : state.socVong, checked => {
+              if (id === "tibet") state.phugpaDaily = checked;
+              else state.socVong = checked;
+              moduleSelectionChanged();
+            });
+            child.classList.add("module-option-child");
+            row.append(child);
+          }
+          details.append(row);
+        });
         container.append(details);
       } else if (active === "misc") {
         renderMiscModuleOptions(container);
@@ -537,7 +565,11 @@
   function makeModuleOption(id, label) {
     return makeCheckboxControl(label, state.selectedModules.has(id), checked => {
       if (checked) state.selectedModules.add(id);
-      else state.selectedModules.delete(id);
+      else {
+        state.selectedModules.delete(id);
+        if (id === "tibet") state.phugpaDaily = false;
+        if (id === "vietnam") state.socVong = false;
+      }
       moduleSelectionChanged();
     });
   }
@@ -552,6 +584,7 @@
     const hasAny = state.dayEvents.length > 0;
     const hasMoonEvent = state.dayEvents.some(event => String(event.module || "") === "moon");
     const showMoonInfo = state.selectedModules.has("moon") && Boolean(state.moonInfo) && !hasMoonEvent;
+    const showPhugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && Boolean(state.phugpaInfo);
     $$("#event-categories .image-tab").forEach(button => {
       const category = button.dataset.category;
       const enabled = state.dayEvents.some(event => categoryForEvent(event) === category);
@@ -560,12 +593,32 @@
       button.classList.toggle("is-active", active && enabled);
       button.setAttribute("aria-pressed", String(active && enabled));
     });
-    dayEmpty.hidden = filtered.length > 0 || (showMoonInfo && !hasAny);
+    dayEmpty.hidden = filtered.length > 0 || (showMoonInfo && !hasAny) || (showPhugpaInfo && !hasAny);
     if (!hasAny) {
       if (!getSelectedModules().length) dayEmpty.textContent = "Включите хотя бы один календарь в настройках.";
+      else if (showPhugpaInfo) dayEmpty.textContent = "";
       else if (state.monthEvents.length) dayEmpty.textContent = "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.";
       else dayEmpty.textContent = "На выбранную дату событий не найдено.";
     } else if (!filtered.length) dayEmpty.textContent = "В этой категории нет событий на выбранную дату. Выберите другую вкладку.";
+    if (showPhugpaInfo) {
+      const info = state.phugpaInfo;
+      const card = document.createElement("article");
+      card.className = "event-card phugpa-info-card";
+      const title = document.createElement("h3");
+      title.className = "event-title";
+      title.textContent = "ПУГПА — СВОДКА ДНЯ";
+      const details = document.createElement("p");
+      details.className = "event-summary";
+      const month = String(info.tibetan_month || "—") + (info.is_leap_month ? " (вставной)" : "");
+      const animal = ({0:"крыса",1:"бык",2:"тигр",3:"заяц",4:"дракон",5:"змея",6:"лошадь",7:"овца",8:"обезьяна",9:"петух",10:"собака",11:"свинья"})[info.tibetan_day_animal] || String(info.tibetan_day_animal ?? "—");
+      const element = ({0:"дерево",1:"огонь",2:"земля",3:"металл",4:"вода"})[info.tibetan_day_element] || String(info.tibetan_day_element ?? "—");
+      const mewaElement = ({water:"вода",earth:"земля",wood:"дерево",fire:"огонь",metal:"металл"})[info.mewa_element] || String(info.mewa_element || "—");
+      const parkhaElement = ({sky:"пространство",water:"вода",earth:"земля",wood:"дерево",fire:"огонь",metal:"металл",mountain:"гора",wind:"ветер"})[info.parkha_element] || String(info.parkha_element || "—");
+      const mewaColor = ({white:"белый",black:"чёрный",blue:"синий",green:"зелёный",yellow:"жёлтый",red:"красный"})[info.mewa_color] || String(info.mewa_color || "—");
+      details.textContent = "Тибетский год: " + String(info.tibetan_year || "—") + "; месяц: " + month + "; лунный день: " + String(info.lunar_day || "—") + (info.is_doubled ? " (повторный день)" : "") + ". Животное дня: " + animal + "; стихия дня: " + element + ". Мева: " + String(info.mewa || "—") + " (" + mewaColor + ", " + mewaElement + "); паркха: " + String(info.parkha || "—") + " (" + parkhaElement + ").";
+      card.append(title, details);
+      dayEvents.append(card);
+    }
     if (showMoonInfo) {
       const card = document.createElement("article");
       card.className = "event-card moon-info-card";
@@ -658,6 +711,7 @@
     const modules = getSelectedModules();
     if (!modules.length) {
       state.moonInfo = null;
+      state.phugpaInfo = null;
       state.dayEvents = [];
       dayStatus.textContent = "";
       renderDayEvents();
@@ -676,6 +730,7 @@
       const payload = await fetchJson(API_BASE + "/api/calendar/day?" + params.toString(), controller.signal);
       if (requestId !== state.dayRequestId || keyAtRequest !== dateKey(state.selectedDate)) return;
       state.moonInfo = state.selectedModules.has("moon") && payload && payload.moon_phase ? payload.moon_phase : null;
+      state.phugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && payload && payload.phugpa_daily ? payload.phugpa_daily : null;
       state.dayEvents = normalizeEvents(payload).filter(event => eventOccursOn(event, state.selectedDate));
       const available = new Set(state.dayEvents.map(categoryForEvent));
       if (!available.has(state.activeEventCategory)) state.activeEventCategory = CATEGORY_ORDER.find(key => available.has(key)) || "astronomy";
@@ -685,6 +740,7 @@
       if (requestId !== state.dayRequestId || error.name === "AbortError") return;
       state.dayEvents = [];
       state.moonInfo = null;
+      state.phugpaInfo = null;
       dayStatus.textContent = safeErrorMessage(error);
       renderDayEvents();
     }
@@ -712,6 +768,9 @@
   function resetSettings() {
     state.activeSettingsCategory = DEFAULTS.activeSettingsCategory;
     state.selectedModules = new Set(DEFAULTS.selectedModules);
+    state.phugpaDaily = false;
+    state.socVong = false;
+    state.phugpaInfo = null;
     state.settings = { ...DEFAULTS, locale };
     saveSettings();
     renderModuleList();
