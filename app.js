@@ -768,7 +768,8 @@
     const city = typeof cityValue === "string" ? cityValue.trim() : "";
     if (city) lines.push((locale === "en" ? "City: " : "Город: ") + city);
     const module = String(event && event.module || "").toLowerCase();
-    if (module === "myanmar" || module === "burma") return lines.join("\n");
+    const eventId = String(event && event.id || "").toLowerCase();
+    if (typeof extra.display_info_block === "string") return extra.display_info_block.trim();
 
     const tibetan = event && module === "tibet" ? extra : null;
     if (tibetan && ["tibetan_year", "tibetan_month", "lunar_day", "tibetan_year_animal", "tibetan_year_element", "tibetan_month_animal", "tibetan_month_element", "tibetan_day_animal", "tibetan_day_element"].every(key => Number.isInteger(tibetan[key]))) {
@@ -798,17 +799,20 @@
       lines.push(yearLine, monthLine, dayLine, (ru ? (tibetan.is_skipped === true ? "Пропущенный цеше жаг (Chad): " : tibetan.is_doubled === true || tibetan.is_first_of_doubled === true ? "Сдвоенный цеше жаг (Lhag): " : "Цеше жаг: ") : (tibetan.is_skipped === true ? "Skipped Tseshe Zhag (Chad): " : tibetan.is_doubled === true || tibetan.is_first_of_doubled === true ? "Doubled Tseshe Zhag (Lhag): " : "Tseshe Zhag: ")) + tibetan.lunar_day);
     } else {
       const yearFields = [
-        ["buddhist_year", locale === "en" ? "Buddhist year" : "Буддийский год", " BE"],
-        ["be_year", locale === "en" ? "Buddhist year" : "Буддийский год", " BE"],
-        ["myanmar_year", locale === "en" ? "Burmese year" : "Бирманский год", " ME"]
+        ["buddhist_year", locale === "en" ? "Buddhist year" : "\u0411\u0443\u0434\u0434\u0438\u0439\u0441\u043a\u0438\u0439 \u0433\u043e\u0434", " BE", "sri_lanka_vesak_poya"],
+        ["be_year", locale === "en" ? "Buddhist year" : "\u0411\u0443\u0434\u0434\u0438\u0439\u0441\u043a\u0438\u0439 \u0433\u043e\u0434", " BE", "thailand_songkran"],
+        ["myanmar_year", locale === "en" ? "Burmese year" : "\u0411\u0438\u0440\u043c\u0430\u043d\u0441\u043a\u0438\u0439 \u0433\u043e\u0434", " ME", "myanmar_new_year"]
       ];
-      for (const [key, label, suffix] of yearFields) {
-        if (Number.isInteger(extra[key]) && !lines.some(line => line.startsWith(label + ":"))) lines.push(label + ": " + extra[key] + suffix);
+      for (const [key, label, suffix, eventMarker] of yearFields) {
+        if (eventId.includes(eventMarker) && Number.isInteger(extra[key]) && !lines.some(line => line.startsWith(label + ":"))) {
+          lines.push(label + ": " + extra[key] + suffix);
+        }
       }
     }
 
     const lunar = event && event.lunar_info && typeof event.lunar_info === "object" ? event.lunar_info : {};
-    const hiddenLunarFields = module === "north_india" ? new Set(["tithi", "paksha"]) : new Set();
+    const showGenericLunarInfo = module === "north_india" || module === "south_india";
+    const hiddenLunarFields = new Set(["tithi", "paksha"]);
     const lunarLabels = {
       lunar_day: locale === "en" ? "Lunar day" : "Лунный день",
       lunar_phase: locale === "en" ? "Lunar phase" : "Фаза Луны",
@@ -830,7 +834,7 @@
     Object.entries(lunarLabels).forEach(([key, label]) => {
       const value = lunar[key];
       const alreadyShownInTibetanBlock = Boolean(tibetan) && ["lunar_day", "tibetan_month", "tibetan_lunar_day"].includes(key);
-      if (!hiddenLunarFields.has(key) && value !== null && value !== undefined && value !== "" && !alreadyShownInTibetanBlock && !lines.some(line => line.startsWith(label + ":"))) {
+      if (showGenericLunarInfo && !hiddenLunarFields.has(key) && value !== null && value !== undefined && value !== "" && !alreadyShownInTibetanBlock && !lines.some(line => line.startsWith(label + ":"))) {
         lines.push(label + ": " + String(value));
       }
     });
@@ -906,8 +910,7 @@
       title.className = "event-title";
       const eventEmoji = String(event.emoji || "");
       const eventTitle = String(event.title || "");
-      const preserveTitleCase = String(event.module || "").toLowerCase() === "north_india" && /ekadashi/i.test(String(event.id || "") + " " + eventTitle);
-      title.textContent = (eventEmoji ? eventEmoji + " " : "") + (preserveTitleCase ? eventTitle : eventTitle.toLocaleUpperCase(locale));
+      title.textContent = (eventEmoji ? eventEmoji + " " : "") + eventTitle.toLocaleUpperCase(locale);
       title.hidden = !eventEmoji && !event.title;
       const dates = document.createElement("p");
       dates.className = "event-date";
