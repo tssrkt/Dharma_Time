@@ -59,7 +59,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .name-days-card .name-day-line { margin: 0; color: #65736a; font-size: 17px; line-height: 1.7; }
 .name-days-card .name-day-line + .name-day-line { margin-top: 2px; }
 .calendar-day.has-events:hover, .calendar-day.has-events:focus-visible { z-index: 10; }
-.event-tooltip { position: absolute; z-index: 20; left: 50%; bottom: calc(100% + 7px); display: none; width: max-content; min-width: 150px; max-width: min(260px, 70vw); padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fffdf8; box-shadow: 0 8px 24px rgba(37, 53, 47, .16); color: var(--ink); text-align: left; white-space: normal; pointer-events: none; transform: translateX(-50%); }
+.event-tooltip { position: absolute; z-index: 20; left: 50%; bottom: calc(100% + 7px); display: none; width: max-content; min-width: 150px; max-width: min(260px, 70vw); padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fffdf8; box-shadow: 0 8px 24px rgba(37, 53, 47, .16); color: var(--ink); text-align: left; white-space: normal; pointer-events: none; transform: translateX(-50%); font-weight: 400; }
+.event-tooltip, .event-tooltip * { font-weight: 400; }
 .event-tooltip-name-days { display: block; margin-bottom: 5px; font-size: 11px; line-height: 1.4; }
 .event-tooltip-list { display: grid; gap: 5px; margin: 0; padding-left: 16px; font-size: 11px; line-height: 1.4; }
 .calendar-day.has-events:hover .event-tooltip, .calendar-day.has-events:focus-visible .event-tooltip { display: block; }

@@ -376,22 +376,26 @@
         tooltip.className = "event-tooltip";
         tooltip.setAttribute("aria-hidden", "true");
         if (hasNameDays) {
-          const nameDaysLabel = document.createElement("strong");
+          const names = Array.from(new Set(dayEvents
+            .filter(isNameDayEvent)
+            .map(event => String(event.title || "").replace(/^[^:]+:\s*/u, "").replace(/[.!\s]+$/u, "").trim())
+            .filter(Boolean)));
+          const nameDaysLabel = document.createElement("span");
           nameDaysLabel.className = "event-tooltip-name-days";
-          nameDaysLabel.textContent = locale === "en" ? "Name days today" : "Сегодня именины";
+          nameDaysLabel.textContent = (locale === "en" ? "Name days: " : "Именины: ") + names.join(", ");
           tooltip.append(nameDaysLabel);
         }
-        const list = document.createElement("ul");
-        list.className = "event-tooltip-list";
-        dayEvents.forEach(event => {
-          const item = document.createElement("li");
-          const eventTitle = String(event.title || "");
-          item.textContent = isNameDayEvent(event)
-            ? eventTitle.replace(/^[^:]+:\s*/u, "").replace(/[.!\s]+$/u, "")
-            : eventTitle;
-          list.append(item);
-        });
-        tooltip.append(list);
+        const regularEvents = dayEvents.filter(event => !isNameDayEvent(event));
+        if (regularEvents.length) {
+          const list = document.createElement("ul");
+          list.className = "event-tooltip-list";
+          regularEvents.forEach(event => {
+            const item = document.createElement("li");
+            item.textContent = String(event.title || "");
+            list.append(item);
+          });
+          tooltip.append(list);
+        }
         button.append(tooltip);
       } else {
         button.setAttribute("aria-label", longDate(date));
