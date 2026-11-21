@@ -275,6 +275,9 @@
   function formatDescription(value, module) {
     const text = String(value || "").replace(/\r\n?/g, "\n").trim();
     if (!text) return text;
+    if (module === "tibet") {
+      return text.replace(/[\t ]*\n+[\t ]*(?=Празднуется)/giu, " ");
+    }
     if (/\n/.test(text) || text.length < 220) return text;
 
     const sentences = text.split(/(?<=[.!?]) +/u);
