@@ -224,7 +224,13 @@
 
     const extra = event.extra && typeof event.extra === "object" ? event.extra : {};
     const module = String(event.module || "");
-    const kind = String(extra.kind || "");
+    const phaseAliases = {
+      phase_new_moon: "new_moon",
+      phase_first_quarter: "first_quarter",
+      phase_full_moon: "full_moon",
+      phase_last_quarter: "last_quarter"
+    };
+    const kind = String(extra.kind || phaseAliases[extra.phase_key] || "");
     if (module === "moon") {
       const phaseDescriptions = {
         new_moon: "Новолуние: освещённая сторона Луны обращена от Земли, поэтому Луна обычно почти не видна на ночном небе.",
@@ -241,13 +247,7 @@
       return "Именины по выбранному календарю. Имена: " + extra.names.join(", ") + ".";
     }
 
-    const categoryDescriptions = {
-      astronomy: "Астрономическое событие, рассчитанное для выбранной даты и часового пояса.",
-      buddhism: "Событие отмечено в календаре буддийской традиции. Подробное пояснение источник не предоставил.",
-      hindu: "Событие отмечено в индуистском календаре. Подробное пояснение источник не предоставил.",
-      misc: "Дата отмечена в выбранном календаре. Подробное пояснение источник не предоставил."
-    };
-    return categoryDescriptions[categoryForEvent(event)] || categoryDescriptions.misc;
+    return "";
   }
   function iconForCategory(category) { return ({ astronomy: "☾", buddhism: "☸", hindu: "ॐ", misc: "✿" })[category] || "✿"; }
   function renderCalendar() {
@@ -402,7 +402,8 @@
       card.className = "event-card";
       const title = document.createElement("h3");
       title.className = "event-title";
-      title.textContent = iconForCategory(categoryForEvent(event)) + " " + String(event.title || "Событие").toLocaleUpperCase(locale);
+      const eventEmoji = String(event.emoji || "");
+      title.textContent = (eventEmoji ? eventEmoji + " " : "") + String(event.title || "Событие").toLocaleUpperCase(locale);
       const dates = document.createElement("p");
       dates.className = "event-date";
       const start = event.start_date || event.start;
@@ -412,10 +413,12 @@
       const descriptionText = eventDescription(event);
       const summary = document.createElement("p");
       summary.className = "event-summary";
-      summary.textContent = String(event.short_description || event.description || descriptionText);
+      const summaryText = String(event.short_description || (descriptionText.length > 140 ? descriptionText.slice(0, 137).trimEnd() + "…" : descriptionText));
+      summary.textContent = summaryText;
       const isExpanded = state.expandedEvents.has(String(event.id || index));
-      card.append(title, dates, summary);
-      if (isExpanded) {
+      card.append(title, dates);
+      if (summaryText) card.append(summary);
+      if (isExpanded && descriptionText) {
         const description = document.createElement("p");
         description.className = "event-description";
         description.textContent = descriptionText;
