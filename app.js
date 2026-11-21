@@ -741,9 +741,9 @@
       const card = document.createElement("article");
       card.className = "event-card panchanga-info-card";
       const title = document.createElement("h3"); title.className = "event-title";
-      title.textContent = "\u{1F338} \u041f\u0410\u041d\u0427\u0410\u041d\u0413\u0410";
+      title.textContent = "\u{1F338} \u041f\u0410\u041d\u0427\u0410\u041d\u0413\u0410 (\u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f)";
       const details = document.createElement("p"); details.className = "event-description panchanga-summary";
-      const panchangaDescription = String(state.panchangaInfo.description || "").replace(/([^\n])\n(?=(?:Начало|Start):)/g, "$1\n\n");
+      const panchangaDescription = String(state.panchangaInfo.description || "").replace(/^\u{1F338}\s*/u, "").replace(/([^\n])\n(?=(?:Начало|Start):)/g, "$1\n\n");
       details.textContent = panchangaDescription || "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0430\u043d\u0447\u0430\u043d\u0433\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f.";
       card.append(title, details); dayEvents.append(card);
     }
