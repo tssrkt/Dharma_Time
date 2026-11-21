@@ -708,10 +708,10 @@
     const hasAny = state.dayEvents.length > 0;
     const showMoonInfo = state.selectedModules.has("moon") && Boolean(state.moonInfo) && state.activeEventCategory === "astronomy";
     const showPhugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && Boolean(state.phugpaInfo);
-    const showPanchangaInfo = (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo);
+    const showPanchangaInfo = state.activeEventCategory === "hindu" && (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo);
     $$("#event-categories .image-tab").forEach(button => {
       const category = button.dataset.category;
-      const enabled = state.dayEvents.some(event => categoryForEvent(event) === category) || (category === "astronomy" && state.selectedModules.has("moon") && Boolean(state.moonInfo));
+      const enabled = state.dayEvents.some(event => categoryForEvent(event) === category) || (category === "astronomy" && state.selectedModules.has("moon") && Boolean(state.moonInfo)) || (category === "hindu" && (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo));
       const active = category === state.activeEventCategory;
       button.disabled = !enabled;
       button.classList.toggle("is-active", active && enabled);
@@ -741,8 +741,8 @@
       const card = document.createElement("article");
       card.className = "event-card panchanga-info-card";
       const title = document.createElement("h3"); title.className = "event-title";
-      title.textContent = state.panchangaInfo.title || "\u041f\u0430\u043d\u0447\u0430\u043d\u0433\u0430";
-      const details = document.createElement("p"); details.className = "event-summary";
+      title.textContent = "\u{1F338} \u041f\u0410\u041d\u0427\u0410\u041d\u0413\u0410";
+      const details = document.createElement("p"); details.className = "event-description panchanga-summary";
       details.textContent = state.panchangaInfo.description || "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0430\u043d\u0447\u0430\u043d\u0433\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f.";
       card.append(title, details); dayEvents.append(card);
     }
