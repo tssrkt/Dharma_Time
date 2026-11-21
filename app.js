@@ -307,7 +307,7 @@
     if (!text || /\n/.test(text) || text.length < 220) return text;
 
     const sentences = text.split(/(?<=[.!?]) +/u);
-    if (sentences.length < 3) return text;
+    if (sentences.length < 4) return text;
     const paragraphs = [];
     for (let i = 0; i < sentences.length; i += 2) {
       paragraphs.push(sentences.slice(i, i + 2).join(" "));
