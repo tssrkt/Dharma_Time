@@ -826,7 +826,8 @@
     };
     Object.entries(lunarLabels).forEach(([key, label]) => {
       const value = lunar[key];
-      if (value !== null && value !== undefined && value !== "" && !lines.some(line => line.startsWith(label + ":"))) {
+      const alreadyShownInTibetanBlock = Boolean(tibetan) && ["lunar_day", "tibetan_month", "tibetan_lunar_day"].includes(key);
+      if (value !== null && value !== undefined && value !== "" && !alreadyShownInTibetanBlock && !lines.some(line => line.startsWith(label + ":"))) {
         lines.push(label + ": " + String(value));
       }
     });
