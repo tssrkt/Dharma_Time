@@ -191,10 +191,8 @@
         params.set("longitude", String(lon));
       }
     }
-    const countries = [];
-    if (modules.includes("government_russia")) countries.push("Russia");
-    if (modules.includes("government_ukraine")) countries.push("Ukraine");
-    if (countries.length) params.set("countries", countries.join(","));
+    // Each government calendar is selected explicitly by its module ID.
+    // A global countries filter would incorrectly hide unrelated events.
     if (date) params.set("date", dateKey(date));
     return params;
   }
