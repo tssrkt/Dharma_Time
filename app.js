@@ -276,6 +276,15 @@
     if (["astronomy", "astronomical"].includes(tradition)) return "astronomy";
     return "misc";
   }
+  const NAME_DAY_MODULES = new Set(["name_days_orthodox_old", "name_days_orthodox_new", "name_days_catholic"]);
+  function isNameDayEvent(event) { return NAME_DAY_MODULES.has(String(event.module || "")); }
+  function nameDayTradition(event) {
+    const module = String(event.module || "");
+    if (module === "name_days_orthodox_new") return locale === "en" ? "Orthodox (new)" : "Православие (новое)";
+    if (module === "name_days_orthodox_old") return locale === "en" ? "Orthodox (old)" : "Православие (старое)";
+    if (module === "name_days_catholic") return locale === "en" ? "Catholicism" : "Католицизм";
+    return "";
+  }
   function eventDescription(event) {
     return String(event.description || event.short_description || "").trim();
   }
@@ -357,6 +366,14 @@
       if (monthEventKeys.has(key)) {
         const dayEvents = state.monthEvents.filter(event => eventOccursOn(event, date));
         button.classList.add("has-events");
+        const hasNameDays = dayEvents.some(isNameDayEvent);
+        button.classList.toggle("has-name-days", hasNameDays);
+        if (hasNameDays) {
+          const marker = document.createElement("span");
+          marker.className = "name-day-marker";
+          marker.setAttribute("aria-hidden", "true");
+          button.append(marker);
+        }
         const phaseLabel = moonPhase ? " Фаза Луны: " + moonPhase.label + "." : "";
         button.setAttribute("aria-label", longDate(date) + "." + phaseLabel + " События: " + dayEvents.map(event => String(event.title || "")).filter(Boolean).join("; "));
         const tooltip = document.createElement("span");
@@ -910,7 +927,24 @@
       dayEvents.append(card);
     }
 
-    filtered.forEach((event, index) => {
+    const nameDayEvents = filtered.filter(isNameDayEvent);
+    if (nameDayEvents.length) {
+      const card = document.createElement("article");
+      card.className = "event-card name-days-card";
+      const title = document.createElement("h3");
+      title.className = "event-title";
+      title.textContent = "🎉 " + (locale === "en" ? "NAME DAYS!" : "ИМЕНИНЫ!");
+      card.append(title);
+      nameDayEvents.forEach(event => {
+        const line = document.createElement("p");
+        line.className = "name-day-line";
+        const name = String(event.title || "").trim().replace(/[.!\s]+$/u, "");
+        line.textContent = nameDayTradition(event) + (name ? ": " + name + "." : ".");
+        card.append(line);
+      });
+      dayEvents.append(card);
+    }
+    filtered.filter(event => !isNameDayEvent(event)).forEach((event, index) => {
       const card = document.createElement("article");
       card.className = "event-card";
       const title = document.createElement("h3");

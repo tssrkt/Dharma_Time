@@ -32,6 +32,27 @@ test("Sri Lanka Buddhist year is restricted to Vesak", () => {
   assert.equal(format({ ...common, id: "sri_lanka_sri_lanka_uposatha_2026-05-02" }), "Город: Коломбо (Шри-Ланка)");
 });
 
+test("Name-day modules map to localized tradition labels and one shared heading", () => {
+  const start = source.indexOf("  const NAME_DAY_MODULES = new Set([");
+  const end = source.indexOf("  function eventDescription(event) {", start);
+  assert.ok(start >= 0 && end > start, "name-day helpers are present");
+  const helpers = source.slice(start, end);
+  assert.match(helpers, /name_days_orthodox_old/);
+  assert.match(helpers, /name_days_orthodox_new/);
+  assert.match(helpers, /name_days_catholic/);
+  assert.match(source, /NAME DAYS!.*ИМЕНИНЫ!/s);
+  assert.match(source, /nameDayTradition\(event\).*name \+ "\."/);
+  assert.match(source, /filtered\.filter\(event => !isNameDayEvent\(event\)\)/);
+});
+
+test("Calendar name days use a separate dot marker instead of the event ring", () => {
+  assert.match(source, /button\.classList\.toggle\("has-name-days", hasNameDays\)/);
+  assert.match(source, /marker\.className = "name-day-marker"/);
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(css, /calendar-day\.has-events:not\(\.has-name-days\)::before/);
+  assert.match(css, /calendar-day \.name-day-marker[^}]*border-radius: 50%/);
+});
+
 test("All event titles, including Ekadashi, use uppercase formatting", () => {
   assert.match(source, /eventTitle\.toLocaleUpperCase\(locale\)/);
   assert.doesNotMatch(source, /preserveTitleCase/);
