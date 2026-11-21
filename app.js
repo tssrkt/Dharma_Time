@@ -71,6 +71,15 @@
     dayController: null,
     expandedEvents: new Set(),
     nameDaysOpen: false,
+    chaturthiOpen: false,
+    amavasyaOpen: false,
+    hinduOptions: {
+      panchanga: false, vaishnava: false, vaishnavaTradition: "gaudiya",
+      ekadashi: false, ekadashiMode: "gaudiya", sankashtiChaturthi: false,
+      vinayakaChaturthi: false, pradosh: false, purnima: false,
+      shivaratri: false, dashavatara: false, sankranti: false
+    },
+    panchangaInfo: null,
     settings: { ...DEFAULTS }
   };
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -114,6 +123,20 @@
       state.selectedModules = new Set(selected);
       state.phugpaDaily = Boolean(stored.phugpaDaily) && state.selectedModules.has("tibet");
       state.socVong = Boolean(stored.socVong) && state.selectedModules.has("vietnam");
+      const savedHindu = stored.hinduOptions && typeof stored.hinduOptions === "object" ? stored.hinduOptions : {};
+      state.hinduOptions = {
+        panchanga: Boolean(savedHindu.panchanga),
+        vaishnava: Boolean(savedHindu.vaishnava),
+        vaishnavaTradition: ["gaudiya", "sri", "madhva"].includes(savedHindu.vaishnavaTradition) ? savedHindu.vaishnavaTradition : "gaudiya",
+        ekadashi: Boolean(savedHindu.ekadashi),
+        ekadashiMode: ["gaudiya", "smarta"].includes(savedHindu.ekadashiMode) ? savedHindu.ekadashiMode : "gaudiya",
+        sankashtiChaturthi: Boolean(savedHindu.sankashtiChaturthi),
+        vinayakaChaturthi: Boolean(savedHindu.vinayakaChaturthi),
+        pradosh: Boolean(savedHindu.pradosh), purnima: Boolean(savedHindu.purnima),
+        shivaratri: Boolean(savedHindu.shivaratri), dashavatara: Boolean(savedHindu.dashavatara),
+        sankranti: Boolean(savedHindu.sankranti)
+      };
+      if (!state.selectedModules.has("north_india") && !state.selectedModules.has("south_india")) resetHinduOptions();
       normalizeExclusiveModuleGroups();
       state.settings = { ...DEFAULTS, ...stored, locale };
       state.settings.selectedModules = Array.from(state.selectedModules);
@@ -127,6 +150,7 @@
     state.settings.selectedModules = Array.from(state.selectedModules);
     state.settings.phugpaDaily = state.phugpaDaily && state.selectedModules.has("tibet");
     state.settings.socVong = state.socVong && state.selectedModules.has("vietnam");
+    state.settings.hinduOptions = { ...state.hinduOptions };
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings)); } catch (_) { /* Storage can be unavailable in private browsing. */ }
   }
   function getSelectedModules() { return Array.from(state.selectedModules).sort(); }
@@ -142,6 +166,21 @@
     params.set("user_timezone", currentTimezone());
     if (state.selectedModules.has("tibet") && state.phugpaDaily) params.set("phugpa_daily", "true");
     if (state.selectedModules.has("vietnam") && state.socVong) params.set("soc_vong", "true");
+    if (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) {
+      const h = state.hinduOptions;
+      if (date && h.panchanga) params.set("panchanga", "true");
+      if (h.vaishnava) params.set("vaishnava", "true");
+      if (h.ekadashi) params.set("ekadashi", "true");
+      if (h.sankashtiChaturthi) params.set("sankashti_chaturthi", "true");
+      if (h.vinayakaChaturthi) params.set("vinayaka_chaturthi", "true");
+      if (h.pradosh) params.set("pradosh", "true");
+      if (h.purnima) params.set("purnima", "true");
+      if (h.shivaratri) params.set("shivaratri", "true");
+      if (h.dashavatara) params.set("dashavatara", "true");
+      if (h.sankranti) params.set("sankranti", "true");
+      params.set("vaishnava_tradition", h.vaishnavaTradition);
+      params.set("ekadashi_mode", h.ekadashiMode);
+    }
     if (state.settings.cityName && state.settings.latitude !== "" && state.settings.longitude !== "") {
       const lat = Number(state.settings.latitude), lon = Number(state.settings.longitude);
       if (Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
@@ -343,6 +382,7 @@
     const active = state.activeSettingsCategory;
     moduleList.classList.toggle("is-buddhism", active === "buddhism");
     moduleList.classList.toggle("is-misc", active === "misc");
+    moduleList.classList.toggle("is-hindu", active === "hindu");
     const groupKeys = active === "buddhism" ? ["mahayana", "theravada"] : [active];
     groupKeys.forEach(key => {
       const group = CATEGORIES[key];
@@ -378,6 +418,8 @@
         container.append(details);
       } else if (active === "misc") {
         renderMiscModuleOptions(container);
+      } else if (active === "hindu") {
+        renderHinduModuleOptions(container);
       } else {
         group.modules.forEach(([id, label]) => container.append(makeModuleOption(id, label)));
       }
@@ -389,6 +431,74 @@
       button.setAttribute("aria-pressed", String(isActive));
     });
   }
+  function resetHinduOptions() {
+    state.hinduOptions = {
+      panchanga: false, vaishnava: false, vaishnavaTradition: "gaudiya",
+      ekadashi: false, ekadashiMode: "gaudiya", sankashtiChaturthi: false,
+      vinayakaChaturthi: false, pradosh: false, purnima: false,
+      shivaratri: false, dashavatara: false, sankranti: false
+    };
+    state.panchangaInfo = null;
+  }
+  function renderHinduModuleOptions(container) {
+    const columns = document.createElement("div");
+    columns.className = "hindu-module-columns";
+    const left = document.createElement("div");
+    left.className = "hindu-module-column";
+    const right = document.createElement("div");
+    right.className = "hindu-module-column hindu-dependent-options";
+    columns.append(left, right);
+    container.append(columns);
+    left.append(makeModuleOption("north_india", "???????? ?????"));
+    left.append(makeModuleOption("south_india", "????? ?????"));
+    left.append(makeModuleOption("indonesia", "????????? ? ????"));
+    if (!state.selectedModules.has("north_india") && !state.selectedModules.has("south_india")) {
+      columns.classList.add("hindu-no-dependent");
+      right.hidden = true;
+      return;
+    }
+
+    const h = state.hinduOptions;
+    const addToggle = (label, key) => right.append(makeCheckboxControl(label, h[key], checked => {
+      h[key] = checked;
+      state.panchangaInfo = null;
+      moduleSelectionChanged();
+    }));
+    addToggle("????????", "panchanga");
+
+    addToggle("????????", "vaishnava");
+    if (h.vaishnava) {
+      const children = document.createElement("div"); children.className = "module-children";
+      [["gaudiya", "??????"], ["sri", "???"], ["madhva", "??????"]].forEach(([value, label]) => children.append(makeRadioControl(label, "hindu-vaishnava-tradition", h.vaishnavaTradition === value, () => {
+        h.vaishnavaTradition = value; moduleSelectionChanged();
+      })));
+      right.append(children);
+    }
+
+    addToggle("???????", "ekadashi");
+    if (h.ekadashi) {
+      const children = document.createElement("div"); children.className = "module-children";
+      [["gaudiya", "??????"], ["smarta", "??????"]].forEach(([value, label]) => children.append(makeRadioControl(label, "hindu-ekadashi-mode", h.ekadashiMode === value, () => {
+        h.ekadashiMode = value; moduleSelectionChanged();
+      })));
+      right.append(children);
+    }
+
+    const folder = (label, open, onToggle, children) => {
+      const details = document.createElement("details"); details.className = "module-folder"; details.open = open;
+      details.addEventListener("toggle", () => onToggle(details.open));
+      const summary = document.createElement("summary"); summary.textContent = label; details.append(summary);
+      const childBox = document.createElement("div"); childBox.className = "module-children";
+      children.forEach(([childLabel, key]) => childBox.append(makeCheckboxControl(childLabel, h[key], checked => {
+        h[key] = checked; moduleSelectionChanged();
+      })));
+      details.append(childBox); right.append(details);
+    };
+    folder("????????", state.chaturthiOpen, value => { state.chaturthiOpen = value; }, [["????????", "sankashtiChaturthi"], ["???????", "vinayakaChaturthi"]]);
+    folder("????????", state.amavasyaOpen, value => { state.amavasyaOpen = value; }, [["??????", "pradosh"], ["???????", "purnima"], ["?????????", "shivaratri"], ["??????????", "dashavatara"]]);
+    addToggle("?????????", "sankranti");
+  }
+
   const CHRISTIAN_MODULES = ["christian_orthodox_old", "christian_orthodox_new", "christian_catholic"];
   const ORTHODOX_NAME_DAY_MODULES = ["name_days_orthodox_old", "name_days_orthodox_new"];
   const GOVERNMENT_MODULES = ["government_russia", "government_ukraine"];
@@ -569,6 +679,7 @@
         state.selectedModules.delete(id);
         if (id === "tibet") state.phugpaDaily = false;
         if (id === "vietnam") state.socVong = false;
+        if ((id === "north_india" || id === "south_india") && !state.selectedModules.has(id === "north_india" ? "south_india" : "north_india")) resetHinduOptions();
       }
       moduleSelectionChanged();
     });
@@ -585,6 +696,7 @@
     const hasMoonEvent = state.dayEvents.some(event => String(event.module || "") === "moon");
     const showMoonInfo = state.selectedModules.has("moon") && Boolean(state.moonInfo) && !hasMoonEvent;
     const showPhugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && Boolean(state.phugpaInfo);
+    const showPanchangaInfo = (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo);
     $$("#event-categories .image-tab").forEach(button => {
       const category = button.dataset.category;
       const enabled = state.dayEvents.some(event => categoryForEvent(event) === category);
@@ -593,10 +705,10 @@
       button.classList.toggle("is-active", active && enabled);
       button.setAttribute("aria-pressed", String(active && enabled));
     });
-    dayEmpty.hidden = filtered.length > 0 || (showMoonInfo && !hasAny) || (showPhugpaInfo && !hasAny);
+    dayEmpty.hidden = filtered.length > 0 || (showMoonInfo && !hasAny) || (showPhugpaInfo && !hasAny) || (showPanchangaInfo && !hasAny);
     if (!hasAny) {
       if (!getSelectedModules().length) dayEmpty.textContent = "Включите хотя бы один календарь в настройках.";
-      else if (showPhugpaInfo) dayEmpty.textContent = "";
+      else if (showPhugpaInfo || showPanchangaInfo) dayEmpty.textContent = "";
       else if (state.monthEvents.length) dayEmpty.textContent = "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.";
       else dayEmpty.textContent = "На выбранную дату событий не найдено.";
     } else if (!filtered.length) dayEmpty.textContent = "В этой категории нет событий на выбранную дату. Выберите другую вкладку.";
@@ -618,6 +730,15 @@
       details.textContent = "Тибетский год: " + String(info.tibetan_year || "—") + "; месяц: " + month + "; лунный день: " + String(info.lunar_day || "—") + (info.is_doubled ? " (повторный день)" : "") + ". Животное дня: " + animal + "; стихия дня: " + element + ". Мева: " + String(info.mewa || "—") + " (" + mewaColor + ", " + mewaElement + "); паркха: " + String(info.parkha || "—") + " (" + parkhaElement + ").";
       card.append(title, details);
       dayEvents.append(card);
+    }
+    if (showPanchangaInfo) {
+      const card = document.createElement("article");
+      card.className = "event-card panchanga-info-card";
+      const title = document.createElement("h3"); title.className = "event-title";
+      title.textContent = state.panchangaInfo.title || "????????";
+      const details = document.createElement("p"); details.className = "event-summary";
+      details.textContent = state.panchangaInfo.description || "??? ?????????? ??? ??? ????????? ?????? ????????.";
+      card.append(title, details); dayEvents.append(card);
     }
     if (showMoonInfo) {
       const card = document.createElement("article");
@@ -712,6 +833,7 @@
     if (!modules.length) {
       state.moonInfo = null;
       state.phugpaInfo = null;
+      state.panchangaInfo = null;
       state.dayEvents = [];
       dayStatus.textContent = "";
       renderDayEvents();
@@ -731,6 +853,7 @@
       if (requestId !== state.dayRequestId || keyAtRequest !== dateKey(state.selectedDate)) return;
       state.moonInfo = state.selectedModules.has("moon") && payload && payload.moon_phase ? payload.moon_phase : null;
       state.phugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && payload && payload.phugpa_daily ? payload.phugpa_daily : null;
+      state.panchangaInfo = (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && payload && payload.panchanga ? payload.panchanga : null;
       state.dayEvents = normalizeEvents(payload).filter(event => eventOccursOn(event, state.selectedDate));
       const available = new Set(state.dayEvents.map(categoryForEvent));
       if (!available.has(state.activeEventCategory)) state.activeEventCategory = CATEGORY_ORDER.find(key => available.has(key)) || "astronomy";
@@ -741,6 +864,7 @@
       state.dayEvents = [];
       state.moonInfo = null;
       state.phugpaInfo = null;
+      state.panchangaInfo = null;
       dayStatus.textContent = safeErrorMessage(error);
       renderDayEvents();
     }
@@ -770,6 +894,7 @@
     state.selectedModules = new Set(DEFAULTS.selectedModules);
     state.phugpaDaily = false;
     state.socVong = false;
+    resetHinduOptions();
     state.phugpaInfo = null;
     state.settings = { ...DEFAULTS, locale };
     saveSettings();

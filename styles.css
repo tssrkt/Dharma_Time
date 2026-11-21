@@ -61,6 +61,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .module-list { display: grid; gap: 4px; margin-top: 15px; }
 .module-list.is-buddhism { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 22px; }
 .misc-module-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 22px; }
+.hindu-module-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 22px; }
+.hindu-module-columns.hindu-no-dependent { grid-template-columns: minmax(0, 1fr); }
+.hindu-module-column { min-width: 0; }
+.hindu-dependent-options { border-left: 1px solid #f0ece3; padding-left: 12px; }
 .misc-module-column { min-width: 0; }
 .module-list.is-buddhism .module-group { border-top: 0; padding-top: 0; }
 .module-group { border-top: 1px solid #f0ece3; padding-top: 9px; }
@@ -115,6 +119,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .settings-panel { padding: 16px 17px; }
   .module-list.is-buddhism { grid-template-columns: minmax(0, 1fr); }
   .misc-module-columns { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+  .hindu-module-columns { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+  .hindu-dependent-options { border-left: 0; border-top: 1px solid #f0ece3; padding-left: 0; padding-top: 8px; }
   .calendar-grid { min-height: 0; }
   .calendar-day { aspect-ratio: 1 / .82; }
 }
