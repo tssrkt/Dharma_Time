@@ -383,6 +383,7 @@
     moduleList.replaceChildren();
     const active = state.activeSettingsCategory;
     moduleList.classList.toggle("is-buddhism", active === "buddhism");
+    moduleList.classList.toggle("is-astronomy", active === "astronomy");
     moduleList.classList.toggle("is-misc", active === "misc");
     moduleList.classList.toggle("is-hindu", active === "hindu");
     const groupKeys = active === "buddhism" ? ["mahayana", "theravada"] : [active];
@@ -403,21 +404,30 @@
             details.append(parentOption);
             return;
           }
-          const row = document.createElement("div");
-          row.className = "module-option-row";
-          row.append(parentOption);
+          details.append(parentOption);
           if (state.selectedModules.has(id)) {
-            const child = makeCheckboxControl(id === "tibet" ? "\u041f\u0443\u0433\u043f\u0430" : "Сок-Вонг", id === "tibet" ? state.phugpaDaily : state.socVong, checked => {
+            const child = makeCheckboxControl(id === "tibet" ? "\u041f\u0443\u0433\u043f\u0430" : "\u0421\u043e\u043a-\u0412\u043e\u043d\u0433", id === "tibet" ? state.phugpaDaily : state.socVong, checked => {
               if (id === "tibet") state.phugpaDaily = checked;
               else state.socVong = checked;
               moduleSelectionChanged();
             });
             child.classList.add("module-option-child");
-            row.append(child);
+            const childRow = document.createElement("div");
+            childRow.className = "module-option-child-row";
+            childRow.append(child);
+            details.append(childRow);
           }
-          details.append(row);
         });
         container.append(details);
+      } else if (active === "astronomy") {
+        const columns = document.createElement("div");
+        columns.className = "astronomy-module-columns";
+        const left = document.createElement("div");
+        const right = document.createElement("div");
+        left.className = right.className = "astronomy-module-column";
+        group.modules.forEach(([id, label], index) => (index < 3 ? left : right).append(makeModuleOption(id, label)));
+        columns.append(left, right);
+        container.append(columns);
       } else if (active === "misc") {
         renderMiscModuleOptions(container);
       } else if (active === "hindu") {
