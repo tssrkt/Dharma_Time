@@ -49,9 +49,10 @@
     activeSettingsCategory: "astronomy",
     selectedModules: ["moon", "sun"],
     locale: "ru",
-    cityName: "",
-    latitude: "",
-    longitude: ""
+    cityName: "Москва",
+    latitude: "55.7558",
+    longitude: "37.6173",
+    timezone: "Europe/Moscow"
   };
   const state = {
     month: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -140,6 +141,12 @@
       if (!state.selectedModules.has("north_india") && !state.selectedModules.has("south_india")) resetHinduOptions();
       normalizeExclusiveModuleGroups();
       state.settings = { ...DEFAULTS, ...stored, locale };
+      if (!state.settings.cityName || !Number.isFinite(Number(state.settings.latitude)) || !Number.isFinite(Number(state.settings.longitude)) || !state.settings.timezone) {
+        state.settings.cityName = DEFAULTS.cityName;
+        state.settings.latitude = DEFAULTS.latitude;
+        state.settings.longitude = DEFAULTS.longitude;
+        state.settings.timezone = DEFAULTS.timezone;
+      }
       state.settings.selectedModules = Array.from(state.selectedModules);
     } catch (_) {
       state.settings = { ...DEFAULTS };
@@ -164,7 +171,7 @@
     if (!modules.length) return null;
     params.set("modules", modules.join(","));
     params.set("locale", state.settings.locale || locale);
-    params.set("user_timezone", currentTimezone());
+    params.set("user_timezone", state.settings.timezone || currentTimezone());
     if (state.selectedModules.has("tibet") && state.phugpaDaily) params.set("phugpa_daily", "true");
     if (state.selectedModules.has("vietnam") && state.socVong) params.set("soc_vong", "true");
     if (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) {
@@ -970,6 +977,70 @@
     loadMonthEvents();
     loadDayEvents();
   }
+  function setupCityPicker() {
+    const input = $("#city-search");
+    const list = $("#city-results");
+    if (!input || !list) return;
+    input.value = state.settings.cityName || DEFAULTS.cityName;
+    let searchTimer = null;
+    let controller = null;
+    let searchSequence = 0;
+    function closeResults() { list.hidden = true; input.setAttribute("aria-expanded", "false"); list.replaceChildren(); }
+    function showResults(results) {
+      list.replaceChildren();
+      results.forEach((city, index) => {
+        const item = document.createElement("li");
+        item.role = "option";
+        item.id = "city-result-" + index;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "city-result";
+        button.textContent = city.name;
+        button.addEventListener("click", () => {
+          state.settings.cityName = city.name.split(",")[0].trim();
+          state.settings.latitude = String(city.latitude);
+          state.settings.longitude = String(city.longitude);
+          state.settings.timezone = city.timezone;
+          input.value = state.settings.cityName;
+          saveSettings();
+          closeResults();
+          state.monthEvents = [];
+          state.dayEvents = [];
+          state.moonInfo = null;
+          state.phugpaInfo = null;
+          state.panchangaInfo = null;
+          renderCalendar();
+          renderDayEvents();
+          loadMonthEvents();
+          loadDayEvents();
+        });
+        item.append(button);
+        list.append(item);
+      });
+      list.hidden = results.length === 0;
+      input.setAttribute("aria-expanded", String(results.length > 0));
+    }
+    input.addEventListener("input", () => {
+      if (searchTimer) clearTimeout(searchTimer);
+      if (controller) controller.abort();
+      const query = input.value.trim();
+      if (query.length < 2) { closeResults(); return; }
+      searchTimer = setTimeout(async () => {
+        controller = new AbortController();
+        const sequence = ++searchSequence;
+        try {
+          const params = new URLSearchParams({ q: query, locale: state.settings.locale || locale });
+          const payload = await fetchJson(API_BASE + "/api/cities/search?" + params, controller.signal);
+          if (sequence === searchSequence && input.value.trim() === query) showResults(payload.results || []);
+        } catch (error) {
+          if (error.name !== "AbortError") closeResults();
+        }
+      }, 250);
+    });
+    input.addEventListener("focus", () => { if (input.value.trim().length >= 2) input.dispatchEvent(new Event("input")); });
+    input.addEventListener("keydown", event => { if (event.key === "Escape") closeResults(); });
+    document.addEventListener("click", event => { if (!event.target.closest(".city-picker")) closeResults(); });
+  }
   function wireEvents() {
     let resizeTimer;
     window.addEventListener("resize", () => {
@@ -1001,6 +1072,8 @@
     renderDayHeading();
     renderDayEvents();
     wireEvents();
+    setupCityPicker();
+    saveSettings();
     if (getSelectedModules().length) {
       loadMonthEvents();
       loadDayEvents();

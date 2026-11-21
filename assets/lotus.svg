@@ -1,10 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <g stroke="#527d69" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M32 54C19 44 9 33 12 21c9 0 16 8 20 18C36 29 43 21 52 21c3 12-7 23-20 33Z" fill="#e5eee8"/>
-    <path d="M32 53V17"/>
-    <path d="M32 39C21 34 18 24 22 12c8 4 11 13 10 27Z" fill="#fffdf8"/>
-    <path d="M32 39C43 34 46 24 42 12c-8 4-11 13-10 27Z" fill="#fffdf8"/>
-    <path d="M32 32C24 26 26 16 32 7c6 9 8 19 0 25Z" fill="#b78b42"/>
-    <path d="M17 46c4 5 9 8 15 8s11-3 15-8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Лотос">
+  <g stroke="#315846" stroke-width="1.8" stroke-linejoin="round">
+    <path d="M32 54C22 47 11 39 8 27c11 2 19 8 24 18C37 35 45 29 56 27 53 39 42 47 32 54Z" fill="#e5eee8"/>
+    <path d="M32 52C19 43 15 31 19 19c7 5 12 13 13 25C33 32 38 24 45 19c4 12 0 24-13 33Z" fill="#c8ddd0"/>
+    <path d="M32 47C20 37 22 21 32 6c10 15 12 31 0 41Z" fill="#527d69"/>
+    <path d="M32 42C27 31 28 20 32 11c4 9 5 20 0 31Z" fill="#b78b42" stroke="none"/>
+    <path d="M6 49C16 54 24 56 32 56s16-2 26-7M12 44c7 4 13 6 20 6s13-2 20-6" stroke="#b78b42" stroke-linecap="round"/>
   </g>
 </svg>
