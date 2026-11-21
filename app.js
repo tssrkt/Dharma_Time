@@ -702,6 +702,45 @@
     dayWeekday.textContent = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date).toLocaleUpperCase(locale);
     dayTitle.textContent = titleCase(new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date)) + (sameDay(date, today) ? " (сегодня)" : "");
   }
+  function appendDailySummaryToggle(card, details, fullText, id) {
+    const isExpanded = state.expandedEvents.has(id);
+    const summaryText = fullText.length > 140 ? fullText.slice(0, 137).trimEnd() + ":" : fullText;
+    details.textContent = isExpanded ? fullText : summaryText;
+    dayEvents.append(card);
+
+    const probe = document.createElement("p");
+    probe.className = "event-description";
+    probe.textContent = fullText;
+    Object.assign(probe.style, {
+      position: "fixed",
+      left: "-10000px",
+      top: "0",
+      width: Math.max(0, card.clientWidth
+        - parseFloat(getComputedStyle(card).paddingLeft)
+        - parseFloat(getComputedStyle(card).paddingRight)) + "px",
+      margin: "0",
+      visibility: "hidden",
+      pointerEvents: "none"
+    });
+    document.body.append(probe);
+    const probeStyle = getComputedStyle(probe);
+    const lineHeight = parseFloat(probeStyle.lineHeight);
+    const hasMoreThanFiveLines = lineHeight > 0 && probe.scrollHeight > lineHeight * 5 + 1;
+    probe.remove();
+
+    if (hasMoreThanFiveLines || isExpanded) {
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "event-toggle";
+      toggle.textContent = isExpanded ? "Свернуть" : "Подробнее";
+      toggle.addEventListener("click", () => {
+        if (state.expandedEvents.has(id)) state.expandedEvents.delete(id);
+        else state.expandedEvents.add(id);
+        renderDayEvents();
+      });
+      card.append(toggle);
+    }
+  }
   function renderDayEvents() {
     const filtered = state.dayEvents.filter(event => categoryForEvent(event) === state.activeEventCategory && !(state.moonInfo && state.activeEventCategory === "astronomy" && String(event.module || "") === "moon"));
     dayEvents.replaceChildren();
@@ -734,8 +773,9 @@
       const details = document.createElement("p");
       details.className = "event-description phugpa-summary";
       details.textContent = String(info.description || "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u041f\u0443\u0433\u043f\u0430 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e.").replace(/^\u{1F538}\s*/u, "");
+      const phugpaDescription = details.textContent;
       card.append(title, details);
-      dayEvents.append(card);
+      appendDailySummaryToggle(card, details, phugpaDescription, "phugpa-daily-" + dateKey(state.selectedDate));
     }
     if (showPanchangaInfo) {
       const card = document.createElement("article");
@@ -745,7 +785,8 @@
       const details = document.createElement("p"); details.className = "event-description panchanga-summary";
       const panchangaDescription = String(state.panchangaInfo.description || "").replace(/^\u{1F338}\s*/u, "").replace(/([^\n])\n(?=(?:Начало|Start):)/g, "$1\n\n");
       details.textContent = panchangaDescription || "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0430\u043d\u0447\u0430\u043d\u0433\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f.";
-      card.append(title, details); dayEvents.append(card);
+      card.append(title, details);
+      appendDailySummaryToggle(card, details, details.textContent, "panchanga-daily-" + dateKey(state.selectedDate));
     }
     if (showMoonInfo) {
       const card = document.createElement("article");
