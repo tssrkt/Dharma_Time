@@ -37,7 +37,15 @@ test("All event titles, including Ekadashi, use uppercase formatting", () => {
   assert.doesNotMatch(source, /preserveTitleCase/);
 });
 
-test("City follows event description on the next line without a blank paragraph", () => {
-  assert.ok(source.includes("const hasLeadingCity = supplementaryText.startsWith(cityPrefix);"));
-  assert.ok(source.includes("join(hasLeadingCity"));
+test("City-only supplementary text follows description without a blank paragraph", () => {
+  const separatorStart = source.indexOf("  function eventDescriptionSeparator(supplementaryText, locale) {");
+  const separatorEnd = source.indexOf("  function renderDayEvents() {", separatorStart);
+  assert.ok(separatorStart >= 0 && separatorEnd > separatorStart, "eventDescriptionSeparator function is present");
+  const getSeparator = new Function("locale", `${source.slice(separatorStart, separatorEnd)}; return eventDescriptionSeparator;`);
+  const separator = getSeparator("ru");
+  assert.equal(separator("Город: Винники", "ru"), "\n");
+  assert.equal(separator("Город: Винники\nТитхи: Шукла Шашти (6)\nНачало: 19:54", "ru"), "\n\n");
+  assert.equal(separator("Город: Винники\nТитхи: Шукла Шашти (6)\nНачало: 19:54\nКонец: 22:31", "ru"), "\n\n");
+  assert.equal(separator("Other information", "ru"), "\n\n");
+  assert.ok(source.includes("join(eventDescriptionSeparator(supplementaryText, locale))"));
 });

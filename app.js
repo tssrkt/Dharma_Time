@@ -841,6 +841,13 @@
     return lines.join("\n");
   }
 
+  function eventDescriptionSeparator(supplementaryText, locale) {
+    const cityPrefix = locale === "en" ? "City: " : "Город: ";
+    const hasLeadingCity = supplementaryText.startsWith(cityPrefix);
+    const hasInfoAfterCity = hasLeadingCity && supplementaryText.includes("\n");
+    return hasInfoAfterCity || !hasLeadingCity ? "\n\n" : "\n";
+  }
+
   function renderDayEvents() {
     const filtered = state.dayEvents.filter(event => categoryForEvent(event) === state.activeEventCategory && !(state.moonInfo && state.activeEventCategory === "astronomy" && String(event.module || "") === "moon"));
     dayEvents.replaceChildren();
@@ -921,9 +928,7 @@
       const rawDescription = eventDescription(event);
       const descriptionText = formatDescription(rawDescription, event.module);
       const supplementaryText = eventSupplementaryInfo(event);
-      const cityPrefix = locale === "en" ? "City: " : "Город: ";
-      const hasLeadingCity = supplementaryText.startsWith(cityPrefix);
-      const fullText = [descriptionText, supplementaryText].filter(Boolean).join(hasLeadingCity ? "\n" : "\n\n");
+      const fullText = [descriptionText, supplementaryText].filter(Boolean).join(eventDescriptionSeparator(supplementaryText, locale));
       const summary = document.createElement("p");
       summary.className = "event-summary";
       summary.textContent = fullText;
