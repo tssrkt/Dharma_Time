@@ -690,22 +690,21 @@
     dayTitle.textContent = titleCase(new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date)) + (sameDay(date, today) ? " (сегодня)" : "");
   }
   function renderDayEvents() {
-    const filtered = state.dayEvents.filter(event => categoryForEvent(event) === state.activeEventCategory);
+    const filtered = state.dayEvents.filter(event => categoryForEvent(event) === state.activeEventCategory && !(state.moonInfo && state.activeEventCategory === "astronomy" && String(event.module || "") === "moon"));
     dayEvents.replaceChildren();
     const hasAny = state.dayEvents.length > 0;
-    const hasMoonEvent = state.dayEvents.some(event => String(event.module || "") === "moon");
-    const showMoonInfo = state.selectedModules.has("moon") && Boolean(state.moonInfo) && !hasMoonEvent;
+    const showMoonInfo = state.selectedModules.has("moon") && Boolean(state.moonInfo) && state.activeEventCategory === "astronomy";
     const showPhugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && Boolean(state.phugpaInfo);
     const showPanchangaInfo = (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && Boolean(state.panchangaInfo);
     $$("#event-categories .image-tab").forEach(button => {
       const category = button.dataset.category;
-      const enabled = state.dayEvents.some(event => categoryForEvent(event) === category);
+      const enabled = state.dayEvents.some(event => categoryForEvent(event) === category) || (category === "astronomy" && state.selectedModules.has("moon") && Boolean(state.moonInfo));
       const active = category === state.activeEventCategory;
       button.disabled = !enabled;
       button.classList.toggle("is-active", active && enabled);
       button.setAttribute("aria-pressed", String(active && enabled));
     });
-    dayEmpty.hidden = filtered.length > 0 || (showMoonInfo && !hasAny) || (showPhugpaInfo && !hasAny) || (showPanchangaInfo && !hasAny);
+    dayEmpty.hidden = filtered.length > 0 || showMoonInfo || (showPhugpaInfo && !hasAny) || (showPanchangaInfo && !hasAny);
     if (!hasAny) {
       if (!getSelectedModules().length) dayEmpty.textContent = "Включите хотя бы один календарь в настройках.";
       else if (showPhugpaInfo || showPanchangaInfo) dayEmpty.textContent = "";
@@ -743,16 +742,14 @@
     if (showMoonInfo) {
       const card = document.createElement("article");
       card.className = "event-card moon-info-card";
+      const lines = String(state.moonInfo.description || "").split("\n");
       const title = document.createElement("h3");
       title.className = "event-title";
-      title.textContent = "🌙 " + String(state.moonInfo.title || "Фаза Луны").toLocaleUpperCase(locale);
-      const age = document.createElement("p");
-      age.className = "event-summary";
-      age.textContent = "Возраст Луны: " + Number(state.moonInfo.age_days).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " дня";
-      const illumination = document.createElement("p");
-      illumination.className = "event-summary";
-      illumination.textContent = "Освещённость: " + Math.round(Number(state.moonInfo.illumination) * 100) + "%";
-      card.append(title, age, illumination);
+      title.textContent = lines.shift() || String(state.moonInfo.title || "").toLocaleUpperCase(locale);
+      const details = document.createElement("p");
+      details.className = "event-summary moon-summary";
+      details.textContent = lines.join("\n");
+      card.append(title, details);
       dayEvents.append(card);
     }
 
@@ -856,6 +853,7 @@
       state.panchangaInfo = (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && payload && payload.panchanga ? payload.panchanga : null;
       state.dayEvents = normalizeEvents(payload).filter(event => eventOccursOn(event, state.selectedDate));
       const available = new Set(state.dayEvents.map(categoryForEvent));
+      if (state.selectedModules.has("moon") && state.moonInfo) available.add("astronomy");
       if (!available.has(state.activeEventCategory)) state.activeEventCategory = CATEGORY_ORDER.find(key => available.has(key)) || "astronomy";
       dayStatus.textContent = "";
       renderDayEvents();
