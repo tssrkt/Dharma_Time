@@ -331,7 +331,8 @@
   function renderModuleList() {
     moduleList.replaceChildren();
     const active = state.activeSettingsCategory;
-    const groupKeys = active === "buddhism" ? ["theravada", "mahayana"] : [active];
+    moduleList.classList.toggle("is-buddhism", active === "buddhism");
+    const groupKeys = active === "buddhism" ? ["mahayana", "theravada"] : [active];
     groupKeys.forEach(key => {
       const group = CATEGORIES[key];
       if (!group) return;
