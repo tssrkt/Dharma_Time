@@ -61,6 +61,7 @@
     selectedModules: new Set(DEFAULTS.selectedModules),
     monthEvents: [],
     dayEvents: [],
+    moonInfo: null,
     monthRequestId: 0,
     dayRequestId: 0,
     monthController: null,
@@ -539,6 +540,8 @@
     const filtered = state.dayEvents.filter(event => categoryForEvent(event) === state.activeEventCategory);
     dayEvents.replaceChildren();
     const hasAny = state.dayEvents.length > 0;
+    const hasMoonEvent = state.dayEvents.some(event => String(event.module || "") === "moon");
+    const showMoonInfo = state.selectedModules.has("moon") && Boolean(state.moonInfo) && !hasMoonEvent;
     $$("#event-categories .image-tab").forEach(button => {
       const category = button.dataset.category;
       const enabled = state.dayEvents.some(event => categoryForEvent(event) === category);
@@ -547,12 +550,28 @@
       button.classList.toggle("is-active", active && enabled);
       button.setAttribute("aria-pressed", String(active && enabled));
     });
-    dayEmpty.hidden = filtered.length > 0;
+    dayEmpty.hidden = filtered.length > 0 || (showMoonInfo && !hasAny);
     if (!hasAny) {
       if (!getSelectedModules().length) dayEmpty.textContent = "Включите хотя бы один календарь в настройках.";
       else if (state.monthEvents.length) dayEmpty.textContent = "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.";
       else dayEmpty.textContent = "На выбранную дату событий не найдено.";
     } else if (!filtered.length) dayEmpty.textContent = "В этой категории нет событий на выбранную дату. Выберите другую вкладку.";
+    if (showMoonInfo) {
+      const card = document.createElement("article");
+      card.className = "event-card moon-info-card";
+      const title = document.createElement("h3");
+      title.className = "event-title";
+      title.textContent = "🌙 " + String(state.moonInfo.title || "Фаза Луны").toLocaleUpperCase(locale);
+      const age = document.createElement("p");
+      age.className = "event-summary";
+      age.textContent = "Возраст Луны: " + Number(state.moonInfo.age_days).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " дня";
+      const illumination = document.createElement("p");
+      illumination.className = "event-summary";
+      illumination.textContent = "Освещённость: " + Math.round(Number(state.moonInfo.illumination) * 100) + "%";
+      card.append(title, age, illumination);
+      dayEvents.append(card);
+    }
+
     filtered.forEach((event, index) => {
       const card = document.createElement("article");
       card.className = "event-card";
@@ -628,6 +647,7 @@
   async function loadDayEvents() {
     const modules = getSelectedModules();
     if (!modules.length) {
+      state.moonInfo = null;
       state.dayEvents = [];
       dayStatus.textContent = "";
       renderDayEvents();
@@ -645,6 +665,7 @@
     try {
       const payload = await fetchJson(API_BASE + "/api/calendar/day?" + params.toString(), controller.signal);
       if (requestId !== state.dayRequestId || keyAtRequest !== dateKey(state.selectedDate)) return;
+      state.moonInfo = state.selectedModules.has("moon") && payload && payload.moon_phase ? payload.moon_phase : null;
       state.dayEvents = normalizeEvents(payload).filter(event => eventOccursOn(event, state.selectedDate));
       const available = new Set(state.dayEvents.map(categoryForEvent));
       if (!available.has(state.activeEventCategory)) state.activeEventCategory = CATEGORY_ORDER.find(key => available.has(key)) || "astronomy";
@@ -653,6 +674,7 @@
     } catch (error) {
       if (requestId !== state.dayRequestId || error.name === "AbortError") return;
       state.dayEvents = [];
+      state.moonInfo = null;
       dayStatus.textContent = safeErrorMessage(error);
       renderDayEvents();
     }
