@@ -407,7 +407,7 @@
           row.className = "module-option-row";
           row.append(parentOption);
           if (state.selectedModules.has(id)) {
-            const child = makeCheckboxControl(id === "tibet" ? "Пугпа" : "Сок-Вонг", id === "tibet" ? state.phugpaDaily : state.socVong, checked => {
+            const child = makeCheckboxControl(id === "tibet" ? "\u{1FAAC} \u041f\u0443\u0433\u043f\u0430" : "Сок-Вонг", id === "tibet" ? state.phugpaDaily : state.socVong, checked => {
               if (id === "tibet") state.phugpaDaily = checked;
               else state.socVong = checked;
               moduleSelectionChanged();
@@ -730,16 +730,10 @@
       card.className = "event-card phugpa-info-card";
       const title = document.createElement("h3");
       title.className = "event-title";
-      title.textContent = "ПУГПА — СВОДКА ДНЯ";
+      title.textContent = "\u{1FAAC} \u041f\u0423\u0413\u041f\u0410 \u2014 \u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f";
       const details = document.createElement("p");
-      details.className = "event-summary";
-      const month = String(info.tibetan_month || "—") + (info.is_leap_month ? " (вставной)" : "");
-      const animal = ({0:"крыса",1:"бык",2:"тигр",3:"заяц",4:"дракон",5:"змея",6:"лошадь",7:"овца",8:"обезьяна",9:"петух",10:"собака",11:"свинья"})[info.tibetan_day_animal] || String(info.tibetan_day_animal ?? "—");
-      const element = ({0:"дерево",1:"огонь",2:"земля",3:"металл",4:"вода"})[info.tibetan_day_element] || String(info.tibetan_day_element ?? "—");
-      const mewaElement = ({water:"вода",earth:"земля",wood:"дерево",fire:"огонь",metal:"металл"})[info.mewa_element] || String(info.mewa_element || "—");
-      const parkhaElement = ({sky:"пространство",water:"вода",earth:"земля",wood:"дерево",fire:"огонь",metal:"металл",mountain:"гора",wind:"ветер"})[info.parkha_element] || String(info.parkha_element || "—");
-      const mewaColor = ({white:"белый",black:"чёрный",blue:"синий",green:"зелёный",yellow:"жёлтый",red:"красный"})[info.mewa_color] || String(info.mewa_color || "—");
-      details.textContent = "Тибетский год: " + String(info.tibetan_year || "—") + "; месяц: " + month + "; лунный день: " + String(info.lunar_day || "—") + (info.is_doubled ? " (повторный день)" : "") + ". Животное дня: " + animal + "; стихия дня: " + element + ". Мева: " + String(info.mewa || "—") + " (" + mewaColor + ", " + mewaElement + "); паркха: " + String(info.parkha || "—") + " (" + parkhaElement + ").";
+      details.className = "event-description phugpa-summary";
+      details.textContent = String(info.description || "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u041f\u0443\u0433\u043f\u0430 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e.");
       card.append(title, details);
       dayEvents.append(card);
     }
