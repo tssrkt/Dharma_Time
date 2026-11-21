@@ -7,13 +7,16 @@
   <meta name="description" content="Календарь Dharma Time">
   <title>Dharma Time — календарь</title>
   <link rel="icon" href="assets/flower.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
 <body>
   <main class="app-shell">
     <header class="site-header">
-      <a class="brand" href="./" aria-label="Dharma Time — на главную"><span class="brand-mark" aria-hidden="true">☸</span><span>Dharma Time</span></a>
+      <a class="brand" href="./" aria-label="Dharma Time — на главную"><img class="brand-mark" src="assets/lotus.svg" alt="" aria-hidden="true"><span>Dharma Time</span></a>
       <p class="header-note">Календарь традиций и природных циклов</p>
     </header>
     <div class="workspace">
@@ -21,12 +24,11 @@
         <div class="calendar-panel panel">
           <div class="month-toolbar">
             <button class="icon-button month-step" id="previous-month" type="button" aria-label="Предыдущий месяц">‹</button>
-            <div class="month-heading"><h1 id="month-title">Загрузка календаря…</h1><button class="today-button" id="go-today" type="button">Сегодня</button></div>
+            <div class="month-heading"><h1 id="month-title">Загрузка календаря…</h1></div>
             <button class="icon-button month-step" id="next-month" type="button" aria-label="Следующий месяц">›</button>
           </div>
           <div class="weekday-row" aria-hidden="true"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
           <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="Дни месяца"></div>
-          <div class="calendar-legend"><span class="legend-dot"></span><span>Есть события</span></div>
           <p class="status-message" id="calendar-status" role="status" aria-live="polite"></p>
         </div>
         <section class="settings-panel panel" aria-label="Выбор календарей">

@@ -190,13 +190,16 @@
     return parseDate(event.start_date || event.start || event.display_dates && event.display_dates[0]);
   }
   function eventsForMonth(events, month) {
+    const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+    const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
     return events.filter(event => {
+      if (Array.isArray(event.display_dates) && event.display_dates.some(value => {
+        const date = parseDate(value);
+        return date && date >= monthStart && date <= monthEnd;
+      })) return true;
       const start = parseDate(event.start_date || event.start);
       const end = parseDate(event.end_date || event.end) || start;
-      if (!start) return false;
-      const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-      const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-      return start <= monthEnd && end >= monthStart;
+      return Boolean(start && end && start <= monthEnd && end >= monthStart);
     });
   }
   function eventOccursOn(event, date) {
@@ -257,6 +260,10 @@
     const cells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
     const monthEventKeys = new Set();
     state.monthEvents.forEach(event => {
+      if (Array.isArray(event.display_dates)) event.display_dates.forEach(value => {
+        const date = parseDate(value);
+        if (date && date.getFullYear() === year && date.getMonth() === month) monthEventKeys.add(dateKey(date));
+      });
       const start = parseDate(event.start_date || event.start);
       const end = parseDate(event.end_date || event.end) || start;
       if (!start || !end) return;
@@ -272,18 +279,29 @@
       button.type = "button";
       button.className = "calendar-day";
       button.setAttribute("role", "gridcell");
-      button.setAttribute("aria-label", longDate(date));
       button.setAttribute("aria-pressed", String(sameDay(date, state.selectedDate)));
       button.textContent = String(date.getDate());
       if (outside) button.classList.add("is-outside");
       if (sameDay(date, today)) button.classList.add("is-today");
       if (sameDay(date, state.selectedDate)) button.classList.add("is-selected");
       if (monthEventKeys.has(key)) {
+        const dayEvents = state.monthEvents.filter(event => eventOccursOn(event, date));
         button.classList.add("has-events");
-        const dot = document.createElement("span");
-        dot.className = "event-dot";
-        dot.setAttribute("aria-hidden", "true");
-        button.append(dot);
+        button.setAttribute("aria-label", longDate(date) + ". События: " + dayEvents.map(event => String(event.title || "Событие")).join("; "));
+        const tooltip = document.createElement("span");
+        tooltip.className = "event-tooltip";
+        tooltip.setAttribute("aria-hidden", "true");
+        const list = document.createElement("ul");
+        list.className = "event-tooltip-list";
+        dayEvents.forEach(event => {
+          const item = document.createElement("li");
+          item.textContent = String(event.title || "Событие");
+          list.append(item);
+        });
+        tooltip.append(list);
+        button.append(tooltip);
+      } else {
+        button.setAttribute("aria-label", longDate(date));
       }
       button.addEventListener("click", () => {
         state.selectedDate = date;
@@ -512,17 +530,6 @@
   function wireEvents() {
     $("#previous-month").addEventListener("click", () => changeMonth(-1));
     $("#next-month").addEventListener("click", () => changeMonth(1));
-    $("#go-today").addEventListener("click", () => {
-      const now = new Date();
-      state.month = new Date(now.getFullYear(), now.getMonth(), 1);
-      state.selectedDate = now;
-      selectedDayKey = dateKey(now);
-      state.expandedEvents.clear();
-      renderCalendar();
-      renderDayHeading();
-      loadMonthEvents();
-      loadDayEvents();
-    });
     $("#settings-categories").addEventListener("click", event => {
       const button = event.target.closest("button[data-category]");
       if (!button) return;
