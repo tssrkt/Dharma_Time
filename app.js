@@ -370,22 +370,25 @@
         const hasRegularEvents = dayEvents.some(event => !isNameDayEvent(event));
         button.classList.toggle("has-name-days", hasNameDays);
         button.classList.toggle("has-regular-events", hasRegularEvents);
-        if (hasNameDays) {
-          const marker = document.createElement("span");
-          marker.className = "name-day-marker";
-          marker.setAttribute("aria-hidden", "true");
-          button.append(marker);
-        }
         const phaseLabel = moonPhase ? " Фаза Луны: " + moonPhase.label + "." : "";
         button.setAttribute("aria-label", longDate(date) + "." + phaseLabel + " События: " + dayEvents.map(event => String(event.title || "")).filter(Boolean).join("; "));
         const tooltip = document.createElement("span");
         tooltip.className = "event-tooltip";
         tooltip.setAttribute("aria-hidden", "true");
+        if (hasNameDays) {
+          const nameDaysLabel = document.createElement("strong");
+          nameDaysLabel.className = "event-tooltip-name-days";
+          nameDaysLabel.textContent = locale === "en" ? "Name days today" : "Сегодня именины";
+          tooltip.append(nameDaysLabel);
+        }
         const list = document.createElement("ul");
         list.className = "event-tooltip-list";
         dayEvents.forEach(event => {
           const item = document.createElement("li");
-          item.textContent = String(event.title || "");
+          const eventTitle = String(event.title || "");
+          item.textContent = isNameDayEvent(event)
+            ? eventTitle.replace(/^[^:]+:\s*/u, "").replace(/[.!\s]+$/u, "")
+            : eventTitle;
           list.append(item);
         });
         tooltip.append(list);
@@ -940,7 +943,7 @@
       nameDayEvents.forEach(event => {
         const line = document.createElement("p");
         line.className = "name-day-line";
-        const name = String(event.title || "").trim().replace(/[.!\s]+$/u, "");
+        const name = String(event.title || "").trim().replace(/^[^:]+:\s*/u, "").replace(/[.!\s]+$/u, "");
         line.textContent = nameDayTradition(event) + (name ? ": " + name + "." : ".");
         card.append(line);
       });

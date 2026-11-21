@@ -42,6 +42,7 @@ test("Name-day modules map to localized tradition labels and one shared heading"
   assert.match(helpers, /name_days_catholic/);
   assert.match(source, /NAME DAYS!.*ИМЕНИНЫ!/s);
   assert.match(source, /nameDayTradition\(event\).*name \+ "\."/);
+  assert.match(source, /replace\(\/\^\[\^:\]\+:\\s\*\/u, ""\)/);
   assert.match(source, /filtered\.filter\(event => !isNameDayEvent\(event\)\)/);
 });
 
@@ -53,15 +54,17 @@ test("Catholicism is listed before Orthodoxy in Christian and name-day settings"
   assert.ok(settings.indexOf('makeCheckboxControl("Католицизм"') < settings.indexOf('makeCheckboxControl("Православие"'));
 });
 
-test("Calendar name days use a separate dot marker instead of the event ring", () => {
+test("Calendar name days have no marker and are announced in the hover tooltip", () => {
   assert.match(source, /button\.classList\.toggle\("has-name-days", hasNameDays\)/);
   assert.match(source, /button\.classList\.toggle\("has-regular-events", hasRegularEvents\)/);
   assert.match(source, /const hasRegularEvents = dayEvents\.some\(event => !isNameDayEvent\(event\)\)/);
-  assert.match(source, /marker\.className = "name-day-marker"/);
+  assert.doesNotMatch(source, /name-day-marker/);
+  assert.match(source, /event-tooltip-name-days/);
+  assert.match(source, /Сегодня именины/);
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
   assert.match(css, /calendar-day\.has-regular-events::before/);
+  assert.doesNotMatch(css, /name-day-marker/);
   assert.doesNotMatch(css, /calendar-day\.has-events:not\(\.has-name-days\)::before/);
-  assert.match(css, /calendar-day \.name-day-marker[^}]*border-radius: 50%/);
 });
 
 test("All event titles, including Ekadashi, use uppercase formatting", () => {
