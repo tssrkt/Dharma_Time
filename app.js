@@ -743,7 +743,8 @@
       const title = document.createElement("h3"); title.className = "event-title";
       title.textContent = "\u{1F338} \u041f\u0410\u041d\u0427\u0410\u041d\u0413\u0410";
       const details = document.createElement("p"); details.className = "event-description panchanga-summary";
-      details.textContent = state.panchangaInfo.description || "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0430\u043d\u0447\u0430\u043d\u0433\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f.";
+      const panchangaDescription = String(state.panchangaInfo.description || "").replace(/([^\n])\n(?=(?:Начало|Start):)/g, "$1\n\n");
+      details.textContent = panchangaDescription || "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0430\u043d\u0447\u0430\u043d\u0433\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f.";
       card.append(title, details); dayEvents.append(card);
     }
     if (showMoonInfo) {
