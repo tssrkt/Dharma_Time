@@ -333,6 +333,7 @@
     moduleList.replaceChildren();
     const active = state.activeSettingsCategory;
     moduleList.classList.toggle("is-buddhism", active === "buddhism");
+    moduleList.classList.toggle("is-misc", active === "misc");
     const groupKeys = active === "buddhism" ? ["mahayana", "theravada"] : [active];
     groupKeys.forEach(key => {
       const group = CATEGORIES[key];
@@ -378,8 +379,17 @@
     return ids.some(id => state.selectedModules.has(id));
   }
   function renderMiscModuleOptions(container) {
+    const columns = document.createElement("div");
+    columns.className = "misc-module-columns";
+    const leftColumn = document.createElement("div");
+    leftColumn.className = "misc-module-column misc-module-column-left";
+    const rightColumn = document.createElement("div");
+    rightColumn.className = "misc-module-column misc-module-column-right";
+    columns.append(leftColumn, rightColumn);
+    container.append(columns);
+
     const christianSelected = anyModuleSelected(CHRISTIAN_MODULES);
-    container.append(makeCheckboxControl("Христианство", christianSelected, checked => {
+    rightColumn.append(makeCheckboxControl("Христианство", christianSelected, checked => {
       if (checked) {
         if (!anyModuleSelected(CHRISTIAN_MODULES)) state.selectedModules.add("christian_orthodox_new");
       } else {
@@ -413,7 +423,7 @@
         replaceModuleSelection(CHRISTIAN_MODULES, "christian_catholic");
         moduleSelectionChanged();
       }));
-      container.append(children);
+      rightColumn.append(children);
     }
 
     const nameDays = document.createElement("details");
@@ -454,10 +464,10 @@
       moduleSelectionChanged();
     }));
     nameDays.append(nameDayChildren);
-    container.append(nameDays);
+    rightColumn.append(nameDays);
 
     const governmentSelected = anyModuleSelected(GOVERNMENT_MODULES);
-    container.append(makeCheckboxControl("Государственные", governmentSelected, checked => {
+    leftColumn.append(makeCheckboxControl("Государственные", governmentSelected, checked => {
       if (checked) {
         if (!anyModuleSelected(GOVERNMENT_MODULES)) state.selectedModules.add("government_russia");
       } else {
@@ -476,12 +486,12 @@
         replaceModuleSelection(GOVERNMENT_MODULES, "government_ukraine");
         moduleSelectionChanged();
       }));
-      container.append(children);
+      leftColumn.append(children);
     }
 
-    container.append(makeModuleOption("international", "Международные"));
-    container.append(makeModuleOption("professional", "Профессиональные"));
-    container.append(makeModuleOption("fun_dates", "Забавные даты"));
+    leftColumn.append(makeModuleOption("international", "Международные"));
+    leftColumn.append(makeModuleOption("professional", "Профессиональные"));
+    leftColumn.append(makeModuleOption("fun_dates", "Забавные даты"));
   }
   function makeCheckboxControl(label, checked, onChange) {
     return makeControl(label, "checkbox", checked, "", onChange);

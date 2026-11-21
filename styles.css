@@ -60,6 +60,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .image-tab:disabled { opacity: .3; cursor: not-allowed; filter: grayscale(.5); }
 .module-list { display: grid; gap: 4px; margin-top: 15px; }
 .module-list.is-buddhism { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 22px; }
+.misc-module-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 22px; }
+.misc-module-column { min-width: 0; }
 .module-list.is-buddhism .module-group { border-top: 0; padding-top: 0; }
 .module-group { border-top: 1px solid #f0ece3; padding-top: 9px; }
 .module-group:first-child { border-top: 0; padding-top: 0; }
@@ -71,9 +73,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .module-subchildren { margin-top: 0; margin-bottom: 3px; }
 .module-children .module-option { min-height: 32px; padding-top: 4px; padding-bottom: 4px; }
 .module-folder { margin: 2px 0; }
-.module-folder > summary { cursor: pointer; list-style: disclosure-closed; color: var(--ink); font-size: 13px; line-height: 1.35; padding: 9px 8px; border-radius: 9px; }
-.module-folder[open] > summary { list-style: disclosure-open; }
-.module-folder > summary:hover { background: #f8f6f0; }
+.module-folder > summary { cursor: pointer; color: #53645a; font-size: 12px; font-weight: 700; line-height: 1.35; padding: 5px 1px 7px; }
+.module-folder[open] > summary { color: #53645a; }
 .settings-footer { display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 12px; border-top: 1px solid #f0ece3; }
 .text-button { border: 0; padding: 4px 0; background: transparent; color: var(--green); font-size: 12px; cursor: pointer; }
 .day-panel { min-height: 480px; padding: 27px 28px 24px; }
@@ -110,6 +111,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .calendar-panel { padding: 20px 18px 15px; }
   .settings-panel { padding: 16px 17px; }
   .module-list.is-buddhism { grid-template-columns: minmax(0, 1fr); }
+  .misc-module-columns { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
   .calendar-grid { min-height: 0; }
   .calendar-day { aspect-ratio: 1 / .82; }
 }
