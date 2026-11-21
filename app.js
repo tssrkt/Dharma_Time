@@ -364,8 +364,14 @@
       button.setAttribute("role", "gridcell");
       button.setAttribute("aria-pressed", String(sameDay(date, state.selectedDate)));
       const moonPhase = moonPhasesByDate.get(key);
-      button.textContent = moonPhase ? moonPhase.emoji : String(date.getDate());
-      if (moonPhase) button.classList.add("is-moon-phase");
+      const dayNumber = document.createElement("span");
+      dayNumber.className = "day-number";
+      dayNumber.textContent = String(date.getDate());
+      button.append(dayNumber);
+      if (moonPhase) {
+        button.classList.add("is-moon-phase");
+        button.dataset.moonPhaseEmoji = moonPhase.emoji;
+      }
       if (outside) button.classList.add("is-outside");
       if (sameDay(date, today)) button.classList.add("is-today");
       if (sameDay(date, state.selectedDate)) button.classList.add("is-selected");
