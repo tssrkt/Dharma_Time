@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f2e9">
-  <meta name="description" content="РљР°Р»РµРЅРґР°СЂСЊ Dharma Time">
-  <title>Dharma Time вЂ” РєР°Р»РµРЅРґР°СЂСЊ</title>
+  <meta name="description" content="Календарь Dharma Time">
+  <title>Dharma Time — календарь</title>
   <link rel="icon" href="assets/flower.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,46 +16,46 @@
 <body>
   <main class="app-shell">
     <header class="site-header">
-      <a class="brand" href="./" aria-label="Dharma Time вЂ” РЅР° РіР»Р°РІРЅСѓСЋ"><img class="brand-mark" src="img/lotus.png" alt="" aria-hidden="true"><span>Dharma Time</span></a>
-      <div class="city-picker"><label for="city-search">Р’Р°С€ РіРѕСЂРѕРґ:</label><div class="city-search-wrap"><input id="city-search" type="text" value="РњРѕСЃРєРІР°" autocomplete="off" aria-autocomplete="list" aria-controls="city-results" aria-expanded="false"><ul id="city-results" class="city-results" role="listbox" hidden></ul></div></div>
+      <a class="brand" href="./" aria-label="Dharma Time — на главную"><img class="brand-mark" src="img/lotus.png" alt="" aria-hidden="true"><span>Dharma Time</span></a>
+      <div class="city-picker"><label for="city-search">Ваш город:</label><div class="city-search-wrap"><input id="city-search" type="text" value="Москва" autocomplete="off" aria-autocomplete="list" aria-controls="city-results" aria-expanded="false"><ul id="city-results" class="city-results" role="listbox" hidden></ul></div></div>
     </header>
     <div class="workspace">
-      <section class="calendar-column" aria-label="РљР°Р»РµРЅРґР°СЂСЊ Рё РЅР°СЃС‚СЂРѕР№РєРё">
+      <section class="calendar-column" aria-label="Календарь и настройки">
         <div class="calendar-panel panel">
           <div class="month-toolbar">
-            <button class="icon-button month-step" id="previous-month" type="button" aria-label="РџСЂРµРґС‹РґСѓС‰РёР№ РјРµСЃСЏС†">вЂ№</button>
-            <div class="month-heading"><h1 id="month-title">Р—Р°РіСЂСѓР·РєР° РєР°Р»РµРЅРґР°СЂСЏвЂ¦</h1></div>
-            <button class="icon-button month-step" id="next-month" type="button" aria-label="РЎР»РµРґСѓСЋС‰РёР№ РјРµСЃСЏС†">вЂє</button>
+            <button class="icon-button month-step" id="previous-month" type="button" aria-label="Предыдущий месяц">‹</button>
+            <div class="month-heading"><h1 id="month-title">Загрузка календаря…</h1></div>
+            <button class="icon-button month-step" id="next-month" type="button" aria-label="Следующий месяц">›</button>
           </div>
-          <div class="weekday-row" aria-hidden="true"><span>РџРЅ</span><span>Р’С‚</span><span>РЎСЂ</span><span>Р§С‚</span><span>РџС‚</span><span>РЎР±</span><span>Р’СЃ</span></div>
-          <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="Р”РЅРё РјРµСЃСЏС†Р°"></div>
+          <div class="weekday-row" aria-hidden="true"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+          <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="Дни месяца"></div>
           <p class="status-message" id="calendar-status" role="status" aria-live="polite"></p>
         </div>
-        <section class="settings-panel panel" aria-label="Р’С‹Р±РѕСЂ РєР°Р»РµРЅРґР°СЂРµР№">
-          <div class="category-tabs" id="settings-categories" aria-label="РљР°С‚РµРіРѕСЂРёРё РєР°Р»РµРЅРґР°СЂРµР№">
-            <button class="image-tab is-active" type="button" data-category="astronomy" aria-label="РђСЃС‚СЂРѕРЅРѕРјРёС‡РµСЃРєРёРµ РєР°Р»РµРЅРґР°СЂРё" aria-pressed="true"><img src="assets/moon.svg" alt=""></button>
-            <button class="image-tab" type="button" data-category="buddhism" aria-label="Р‘СѓРґРґРёР№СЃРєРёРµ РєР°Р»РµРЅРґР°СЂРё" aria-pressed="false"><img src="assets/dharma-wheel.svg" alt=""></button>
-            <button class="image-tab" type="button" data-category="hindu" aria-label="РРЅРґСѓРёСЃС‚СЃРєРёРµ РєР°Р»РµРЅРґР°СЂРё" aria-pressed="false"><img src="assets/om.svg" alt=""></button>
-            <button class="image-tab" type="button" data-category="misc" aria-label="Р”СЂСѓРіРёРµ РєР°Р»РµРЅРґР°СЂРё" aria-pressed="false"><img src="assets/flower.svg" alt=""></button>
+        <section class="settings-panel panel" aria-label="Выбор календарей">
+          <div class="category-tabs" id="settings-categories" aria-label="Категории календарей">
+            <button class="image-tab is-active" type="button" data-category="astronomy" aria-label="Астрономические календари" aria-pressed="true"><img src="assets/moon.svg" alt=""></button>
+            <button class="image-tab" type="button" data-category="buddhism" aria-label="Буддийские календари" aria-pressed="false"><img src="assets/dharma-wheel.svg" alt=""></button>
+            <button class="image-tab" type="button" data-category="hindu" aria-label="Индуистские календари" aria-pressed="false"><img src="assets/om.svg" alt=""></button>
+            <button class="image-tab" type="button" data-category="misc" aria-label="Другие календари" aria-pressed="false"><img src="assets/flower.svg" alt=""></button>
           </div>
           <div id="module-list" class="module-list"></div>
-          <div class="settings-footer"><button id="reset-settings" class="text-button" type="button">РЎР±СЂРѕСЃРёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё</button></div>
+          <div class="settings-footer"><button id="reset-settings" class="text-button" type="button">Сбросить настройки</button></div>
         </section>
       </section>
-      <section class="day-panel panel" aria-label="РЎРѕР±С‹С‚РёСЏ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РґРЅСЏ">
-        <div class="day-heading"><p class="eyebrow" id="day-weekday"></p><h2 id="day-title">Р’С‹Р±РµСЂРёС‚Рµ РґР°С‚Сѓ</h2></div>
-        <div class="category-tabs event-tabs" id="event-categories" aria-label="РљР°С‚РµРіРѕСЂРёРё СЃРѕР±С‹С‚РёР№">
-          <button class="image-tab is-active" type="button" data-category="astronomy" aria-label="РђСЃС‚СЂРѕРЅРѕРјРёС‡РµСЃРєРёРµ СЃРѕР±С‹С‚РёСЏ" aria-pressed="true" disabled><img src="assets/moon.svg" alt=""></button>
-          <button class="image-tab" type="button" data-category="buddhism" aria-label="Р‘СѓРґРґРёР№СЃРєРёРµ СЃРѕР±С‹С‚РёСЏ" aria-pressed="false" disabled><img src="assets/dharma-wheel.svg" alt=""></button>
-          <button class="image-tab" type="button" data-category="hindu" aria-label="РРЅРґСѓРёСЃС‚СЃРєРёРµ СЃРѕР±С‹С‚РёСЏ" aria-pressed="false" disabled><img src="assets/om.svg" alt=""></button>
-          <button class="image-tab" type="button" data-category="misc" aria-label="Р”СЂСѓРіРёРµ СЃРѕР±С‹С‚РёСЏ" aria-pressed="false" disabled><img src="assets/flower.svg" alt=""></button>
+      <section class="day-panel panel" aria-label="События выбранного дня">
+        <div class="day-heading"><p class="eyebrow" id="day-weekday"></p><h2 id="day-title">Выберите дату</h2></div>
+        <div class="category-tabs event-tabs" id="event-categories" aria-label="Категории событий">
+          <button class="image-tab is-active" type="button" data-category="astronomy" aria-label="Астрономические события" aria-pressed="true" disabled><img src="assets/moon.svg" alt=""></button>
+          <button class="image-tab" type="button" data-category="buddhism" aria-label="Буддийские события" aria-pressed="false" disabled><img src="assets/dharma-wheel.svg" alt=""></button>
+          <button class="image-tab" type="button" data-category="hindu" aria-label="Индуистские события" aria-pressed="false" disabled><img src="assets/om.svg" alt=""></button>
+          <button class="image-tab" type="button" data-category="misc" aria-label="Другие события" aria-pressed="false" disabled><img src="assets/flower.svg" alt=""></button>
         </div>
         <div id="day-events" class="event-list"></div>
-        <p class="empty-state" id="day-empty">Р’С‹Р±РµСЂРёС‚Рµ РґР°С‚Сѓ РІ РєР°Р»РµРЅРґР°СЂРµ.</p>
+        <p class="empty-state" id="day-empty">Выберите дату в календаре.</p>
         <p class="status-message" id="day-status" role="status" aria-live="polite"></p>
       </section>
     </div>
-    <footer class="site-footer"><a href="./">Dharma Time</a><span aria-hidden="true">В·</span><a href="https://t.me/dharma_time_bot" target="_blank" rel="noopener noreferrer">Telegram-bot</a><span aria-hidden="true">В·</span><a href="about.html">About</a></footer>
+    <footer class="site-footer"><a href="./">Dharma Time</a><span aria-hidden="true">·</span><a href="https://t.me/dharma_time_bot" target="_blank" rel="noopener noreferrer">Telegram-bot</a><span aria-hidden="true">·</span><a href="about.html">About</a></footer>
   </main>
 </body>
 </html>
