@@ -52,6 +52,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .calendar-day.is-moon-phase::before { content: attr(data-moon-phase-emoji); position: absolute; top: 50%; left: 50%; width: auto; height: auto; max-width: none; max-height: none; border: 0; border-radius: 0; transform: translate(-50%, -50%); font-size: 42px; line-height: 1; opacity: .75; z-index: 0; pointer-events: none; }
 .calendar-day.is-moon-phase::after { content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; border: 1.5px solid var(--green); border-radius: 50%; transform: translate(-50%, -50%); opacity: 1; z-index: 0; pointer-events: none; }
 .calendar-day .day-number { position: relative; z-index: 1; opacity: 1; text-shadow: -1px 0 #fff, 1px 0 #fff, 0 -1px #fff, 0 1px #fff, 0 0 3px #fff, 0 0 5px rgba(255,255,255,.95); }
+.calendar-day.is-moon-phase .day-number { font-weight: 700; }
 .calendar-day.is-selected { border-color: var(--green); background: var(--soft-green); color: var(--green-dark); font-weight: 700; }
 .calendar-day.is-selected.is-today { outline: 2px solid var(--gold); outline-offset: -3px; }
 .calendar-day.has-events { z-index: 1; }
@@ -83,13 +84,13 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .module-list.is-buddhism .module-group { border-top: 0; padding-top: 0; }
 .module-group { border-top: 1px solid #f0ece3; padding-top: 9px; }
 .module-group:first-child { border-top: 0; padding-top: 0; }
-.module-group summary { cursor: pointer; color: #53645a; font-size: 12px; font-weight: 700; padding: 5px 1px 7px; }
+.module-group summary { cursor: pointer; color: #53645a; font-size: 14px; font-weight: 700; padding: 5px 1px 7px; }
 .module-option-child-row { margin-left: 18px; }
 .module-option-child-row .module-option-child { padding-left: 8px; }
 .module-option-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .module-option-row > .module-option { flex: 0 1 auto; min-width: 0; }
 .module-option-row .module-option-child { flex: 0 0 auto; white-space: nowrap; padding-left: 5px; padding-right: 5px; }
-.module-option { display: flex; align-items: center; gap: 10px; min-height: 37px; padding: 6px 8px; border-radius: 9px; cursor: pointer; font-size: 13px; line-height: 1.35; }
+.module-option { display: flex; align-items: center; gap: 10px; min-height: 37px; padding: 6px 8px; border-radius: 9px; cursor: pointer; font-size: 15px; line-height: 1.35; }
 .module-option:hover { background: #f8f6f0; }
 .module-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); flex: 0 0 auto; }
 .module-children { margin: 1px 0 5px 18px; padding-left: 8px; border-left: 1px solid #e7e2d7; }
@@ -97,10 +98,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .module-subchildren { margin-top: 0; margin-bottom: 3px; }
 .module-children .module-option { min-height: 32px; padding-top: 4px; padding-bottom: 4px; }
 .module-folder { margin: 2px 0; }
-.module-folder > summary { cursor: pointer; color: #53645a; font-size: 12px; font-weight: 700; line-height: 1.35; padding: 5px 1px 7px; }
+.module-folder > summary { cursor: pointer; color: #53645a; font-size: 14px; font-weight: 700; line-height: 1.35; padding: 5px 1px 7px; }
 .module-folder[open] > summary { color: #53645a; }
 .settings-footer { display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 12px; border-top: 1px solid #f0ece3; }
-.text-button { border: 0; padding: 4px 0; background: transparent; color: var(--green); font-size: 12px; cursor: pointer; }
+.text-button { border: 0; padding: 4px 0; background: transparent; color: var(--green); font-size: 14px; cursor: pointer; }
 .day-panel { min-height: 480px; padding: 27px 28px 24px; }
 .day-heading { padding-bottom: 19px; border-bottom: 1px solid var(--line); }
 .eyebrow { margin: 0 0 7px; color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
