@@ -251,6 +251,18 @@
 
     return "";
   }
+  function formatDescription(value) {
+    const text = String(value || "").replace(/\r\n?/g, "\n").trim();
+    if (!text || /\n/.test(text) || text.length < 220) return text;
+
+    const sentences = text.split(/(?<=[.!?]) +/u);
+    if (sentences.length < 3) return text;
+    const paragraphs = [];
+    for (let i = 0; i < sentences.length; i += 2) {
+      paragraphs.push(sentences.slice(i, i + 2).join(" "));
+    }
+    return paragraphs.join("\n\n");
+  }
   function iconForCategory(category) { return ({ astronomy: "☾", buddhism: "☸", hindu: "ॐ", misc: "✿" })[category] || "✿"; }
   function renderCalendar() {
     monthTitle.textContent = titleCase(monthName(state.month));
@@ -553,21 +565,25 @@
       const end = event.end_date || event.end;
       dates.textContent = start && end && String(start).slice(0, 10) !== String(end).slice(0, 10) ? String(start).slice(0, 10) + " — " + String(end).slice(0, 10) : "";
       if (!dates.textContent) dates.hidden = true;
-      const descriptionText = eventDescription(event);
+      const rawDescription = eventDescription(event);
+      const descriptionText = formatDescription(rawDescription);
       const summary = document.createElement("p");
       summary.className = "event-summary";
-      const summaryText = String(event.short_description || (descriptionText.length > 140 ? descriptionText.slice(0, 137).trimEnd() + "…" : descriptionText));
+      const suppliedSummary = String(event.short_description || "").trim();
+      const summaryText = suppliedSummary && suppliedSummary !== rawDescription
+        ? suppliedSummary
+        : (rawDescription.length > 140 ? rawDescription.slice(0, 137).trimEnd() + "…" : rawDescription);
       summary.textContent = summaryText;
       const isExpanded = state.expandedEvents.has(String(event.id || index));
       card.append(title, dates);
-      if (summaryText) card.append(summary);
+      if (!isExpanded && summaryText) card.append(summary);
       if (isExpanded && descriptionText) {
         const description = document.createElement("p");
         description.className = "event-description";
         description.textContent = descriptionText;
         card.append(description);
       }
-      if (descriptionText.length > 140) {
+      if (rawDescription.length > 140) {
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = "event-toggle";
