@@ -47,7 +47,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .calendar-day:hover { background: #f3f0e7; }
 .calendar-day.is-outside { color: #b8beb8; }
 .calendar-day.is-today:not(.is-selected) { outline: 2px solid var(--gold); outline-offset: -3px; font-weight: 700; }
-.calendar-day.has-events:not(.has-name-days)::before { content: ""; position: absolute; top: 50%; left: 50%; width: 38px; height: 38px; max-width: calc(100% - 4px); max-height: calc(100% - 4px); border: 1.5px solid var(--green); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.calendar-day.has-regular-events::before { content: ""; position: absolute; top: 50%; left: 50%; width: 38px; height: 38px; max-width: calc(100% - 4px); max-height: calc(100% - 4px); border: 1.5px solid var(--green); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .calendar-day.is-moon-phase { isolation: isolate; font-size: 14px; line-height: 1; padding: 0; }
 .calendar-day.is-moon-phase::before { content: attr(data-moon-phase-emoji); position: absolute; top: 50%; left: 50%; width: auto; height: auto; max-width: none; max-height: none; border: 0; border-radius: 0; transform: translate(-50%, -50%); font-size: 42px; line-height: 1; opacity: .75; z-index: 0; pointer-events: none; }
 .calendar-day.is-moon-phase:not(.has-name-days)::after { content: ""; position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; border: 1.5px solid var(--green); border-radius: 50%; transform: translate(-50%, -50%); opacity: 1; z-index: 0; pointer-events: none; }

@@ -45,11 +45,22 @@ test("Name-day modules map to localized tradition labels and one shared heading"
   assert.match(source, /filtered\.filter\(event => !isNameDayEvent\(event\)\)/);
 });
 
+test("Catholicism is listed before Orthodoxy in Christian and name-day settings", () => {
+  const start = source.indexOf("  function renderMiscModuleOptions(container) {");
+  assert.ok(start >= 0, "misc settings renderer is present");
+  const settings = source.slice(start);
+  assert.ok(settings.indexOf('makeRadioControl("Католицизм"') < settings.indexOf('makeRadioControl("Православие"'));
+  assert.ok(settings.indexOf('makeCheckboxControl("Католицизм"') < settings.indexOf('makeCheckboxControl("Православие"'));
+});
+
 test("Calendar name days use a separate dot marker instead of the event ring", () => {
   assert.match(source, /button\.classList\.toggle\("has-name-days", hasNameDays\)/);
+  assert.match(source, /button\.classList\.toggle\("has-regular-events", hasRegularEvents\)/);
+  assert.match(source, /const hasRegularEvents = dayEvents\.some\(event => !isNameDayEvent\(event\)\)/);
   assert.match(source, /marker\.className = "name-day-marker"/);
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
-  assert.match(css, /calendar-day\.has-events:not\(\.has-name-days\)::before/);
+  assert.match(css, /calendar-day\.has-regular-events::before/);
+  assert.doesNotMatch(css, /calendar-day\.has-events:not\(\.has-name-days\)::before/);
   assert.match(css, /calendar-day \.name-day-marker[^}]*border-radius: 50%/);
 });
 

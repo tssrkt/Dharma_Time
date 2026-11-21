@@ -20,12 +20,12 @@
       ["north_india", "Северная Индия"], ["south_india", "Южная Индия"], ["indonesia", "Индонезия и Бали"]
     ]},
     misc: { label: "Другое", modules: [
+      ["christian_catholic", "Католический календарь"],
       ["christian_orthodox_old", "Православный календарь (старый стиль)"],
       ["christian_orthodox_new", "Православный календарь (новый стиль)"],
-      ["christian_catholic", "Католический календарь"],
+      ["name_days_catholic", "Именины (католические)"],
       ["name_days_orthodox_old", "Именины (православные, старый стиль)"],
       ["name_days_orthodox_new", "Именины (православные, новый стиль)"],
-      ["name_days_catholic", "Именины (католические)"],
       ["government_russia", "Государственные праздники России"],
       ["government_ukraine", "Государственные праздники Украины"],
       ["international", "Международные даты"],
@@ -367,7 +367,9 @@
         const dayEvents = state.monthEvents.filter(event => eventOccursOn(event, date));
         button.classList.add("has-events");
         const hasNameDays = dayEvents.some(isNameDayEvent);
+        const hasRegularEvents = dayEvents.some(event => !isNameDayEvent(event));
         button.classList.toggle("has-name-days", hasNameDays);
+        button.classList.toggle("has-regular-events", hasRegularEvents);
         if (hasNameDays) {
           const marker = document.createElement("span");
           marker.className = "name-day-marker";
@@ -584,6 +586,10 @@
     if (christianSelected) {
       const children = document.createElement("div");
       children.className = "module-children";
+      children.append(makeRadioControl("Католицизм", "christian-tradition", state.selectedModules.has("christian_catholic"), () => {
+        replaceModuleSelection(CHRISTIAN_MODULES, "christian_catholic");
+        moduleSelectionChanged();
+      }));
       const orthodoxSelected = anyModuleSelected(["christian_orthodox_old", "christian_orthodox_new"]);
       children.append(makeRadioControl("Православие", "christian-tradition", orthodoxSelected, () => {
         const oldStyle = state.selectedModules.has("christian_orthodox_old");
@@ -603,10 +609,6 @@
         }));
         children.append(styles);
       }
-      children.append(makeRadioControl("Католицизм", "christian-tradition", state.selectedModules.has("christian_catholic"), () => {
-        replaceModuleSelection(CHRISTIAN_MODULES, "christian_catholic");
-        moduleSelectionChanged();
-      }));
       rightColumn.append(children);
     }
 
@@ -619,6 +621,11 @@
     nameDays.append(nameDaysSummary);
     const nameDayChildren = document.createElement("div");
     nameDayChildren.className = "module-children";
+    nameDayChildren.append(makeCheckboxControl("Католицизм", state.selectedModules.has("name_days_catholic"), checked => {
+      if (checked) state.selectedModules.add("name_days_catholic");
+      else state.selectedModules.delete("name_days_catholic");
+      moduleSelectionChanged();
+    }));
     const orthodoxNamesSelected = anyModuleSelected(ORTHODOX_NAME_DAY_MODULES);
     nameDayChildren.append(makeCheckboxControl("Православие", orthodoxNamesSelected, checked => {
       if (checked) {
@@ -642,11 +649,6 @@
       }));
       nameDayChildren.append(styles);
     }
-    nameDayChildren.append(makeCheckboxControl("Католицизм", state.selectedModules.has("name_days_catholic"), checked => {
-      if (checked) state.selectedModules.add("name_days_catholic");
-      else state.selectedModules.delete("name_days_catholic");
-      moduleSelectionChanged();
-    }));
     nameDays.append(nameDayChildren);
     rightColumn.append(nameDays);
 
