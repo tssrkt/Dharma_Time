@@ -77,6 +77,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .module-option:hover { background: #f8f6f0; }
 .module-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); flex: 0 0 auto; }
 .module-children { margin: 1px 0 5px 18px; padding-left: 8px; border-left: 1px solid #e7e2d7; }
+.hindu-lunar-month-mode { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0 0 10px; padding: 0; border: 0; }
 .module-subchildren { margin-top: 0; margin-bottom: 3px; }
 .module-children .module-option { min-height: 32px; padding-top: 4px; padding-bottom: 4px; }
 .module-folder { margin: 2px 0; }

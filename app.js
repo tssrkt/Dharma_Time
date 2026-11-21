@@ -77,7 +77,7 @@
       panchanga: false, vaishnava: false, vaishnavaTradition: "gaudiya",
       ekadashi: false, ekadashiMode: "gaudiya", sankashtiChaturthi: false,
       vinayakaChaturthi: false, pradosh: false, purnima: false,
-      shivaratri: false, dashavatara: false, sankranti: false
+      shivaratri: false, dashavatara: false, sankranti: false, indiaLunarMonthMode: "purnimanta"
     },
     panchangaInfo: null,
     settings: { ...DEFAULTS }
@@ -134,7 +134,8 @@
         vinayakaChaturthi: Boolean(savedHindu.vinayakaChaturthi),
         pradosh: Boolean(savedHindu.pradosh), purnima: Boolean(savedHindu.purnima),
         shivaratri: Boolean(savedHindu.shivaratri), dashavatara: Boolean(savedHindu.dashavatara),
-        sankranti: Boolean(savedHindu.sankranti)
+        sankranti: Boolean(savedHindu.sankranti),
+        indiaLunarMonthMode: ["purnimanta", "amanta"].includes(savedHindu.indiaLunarMonthMode) ? savedHindu.indiaLunarMonthMode : "purnimanta"
       };
       if (!state.selectedModules.has("north_india") && !state.selectedModules.has("south_india")) resetHinduOptions();
       normalizeExclusiveModuleGroups();
@@ -180,6 +181,7 @@
       if (h.sankranti) params.set("sankranti", "true");
       params.set("vaishnava_tradition", h.vaishnavaTradition);
       params.set("ekadashi_mode", h.ekadashiMode);
+      params.set("india_lunar_month_mode", h.indiaLunarMonthMode);
     }
     if (state.settings.cityName && state.settings.latitude !== "" && state.settings.longitude !== "") {
       const lat = Number(state.settings.latitude), lon = Number(state.settings.longitude);
@@ -436,7 +438,7 @@
       panchanga: false, vaishnava: false, vaishnavaTradition: "gaudiya",
       ekadashi: false, ekadashiMode: "gaudiya", sankashtiChaturthi: false,
       vinayakaChaturthi: false, pradosh: false, purnima: false,
-      shivaratri: false, dashavatara: false, sankranti: false
+      shivaratri: false, dashavatara: false, sankranti: false, indiaLunarMonthMode: "purnimanta"
     };
     state.panchangaInfo = null;
   }
@@ -449,9 +451,9 @@
     right.className = "hindu-module-column hindu-dependent-options";
     columns.append(left, right);
     container.append(columns);
-    left.append(makeModuleOption("north_india", "???????? ?????"));
-    left.append(makeModuleOption("south_india", "????? ?????"));
-    left.append(makeModuleOption("indonesia", "????????? ? ????"));
+    left.append(makeModuleOption("north_india", "\u0421\u0435\u0432\u0435\u0440\u043d\u0430\u044f \u0418\u043d\u0434\u0438\u044f"));
+    left.append(makeModuleOption("south_india", "\u042e\u0436\u043d\u0430\u044f \u0418\u043d\u0434\u0438\u044f"));
+    left.append(makeModuleOption("indonesia", "\u0418\u043d\u0434\u043e\u043d\u0435\u0437\u0438\u044f \u0438 \u0411\u0430\u043b\u0438"));
     if (!state.selectedModules.has("north_india") && !state.selectedModules.has("south_india")) {
       columns.classList.add("hindu-no-dependent");
       right.hidden = true;
@@ -459,26 +461,37 @@
     }
 
     const h = state.hinduOptions;
+    if (state.selectedModules.has("north_india") && state.selectedModules.has("south_india")) {
+      const lunarMode = document.createElement("div");
+      lunarMode.className = "module-children hindu-lunar-month-mode";
+      [["purnimanta", "\u041f\u0443\u0440\u043d\u0438\u043c\u0430\u043d\u0442\u0430"], ["amanta", "\u0410\u043c\u0430\u043d\u0442\u0430"]].forEach(([value, label]) => {
+        lunarMode.append(makeRadioControl(label, "hindu-lunar-month-mode", h.indiaLunarMonthMode === value, () => {
+          h.indiaLunarMonthMode = value;
+          moduleSelectionChanged();
+        }));
+      });
+      right.append(lunarMode);
+    }
     const addToggle = (label, key) => right.append(makeCheckboxControl(label, h[key], checked => {
       h[key] = checked;
       state.panchangaInfo = null;
       moduleSelectionChanged();
     }));
-    addToggle("????????", "panchanga");
+    addToggle("\u041f\u0430\u043d\u0447\u0430\u043d\u0433\u0430", "panchanga");
 
-    addToggle("????????", "vaishnava");
+    addToggle("\u0412\u0430\u0439\u0448\u043d\u0430\u0432\u0430", "vaishnava");
     if (h.vaishnava) {
       const children = document.createElement("div"); children.className = "module-children";
-      [["gaudiya", "??????"], ["sri", "???"], ["madhva", "??????"]].forEach(([value, label]) => children.append(makeRadioControl(label, "hindu-vaishnava-tradition", h.vaishnavaTradition === value, () => {
+      [["gaudiya", "\u0413\u0430\u0443\u0434\u0438\u044f"], ["sri", "\u0428\u0440\u0438"], ["madhva", "\u041c\u0430\u0434\u0445\u0432\u0430"]].forEach(([value, label]) => children.append(makeRadioControl(label, "hindu-vaishnava-tradition", h.vaishnavaTradition === value, () => {
         h.vaishnavaTradition = value; moduleSelectionChanged();
       })));
       right.append(children);
     }
 
-    addToggle("???????", "ekadashi");
+    addToggle("\u042d\u043a\u0430\u0434\u0430\u0448\u0438", "ekadashi");
     if (h.ekadashi) {
       const children = document.createElement("div"); children.className = "module-children";
-      [["gaudiya", "??????"], ["smarta", "??????"]].forEach(([value, label]) => children.append(makeRadioControl(label, "hindu-ekadashi-mode", h.ekadashiMode === value, () => {
+      [["gaudiya", "\u0413\u0430\u0443\u0434\u0438\u044f"], ["smarta", "\u0421\u043c\u0430\u0440\u0442\u0430"]].forEach(([value, label]) => children.append(makeRadioControl(label, "hindu-ekadashi-mode", h.ekadashiMode === value, () => {
         h.ekadashiMode = value; moduleSelectionChanged();
       })));
       right.append(children);
@@ -494,9 +507,9 @@
       })));
       details.append(childBox); right.append(details);
     };
-    folder("????????", state.chaturthiOpen, value => { state.chaturthiOpen = value; }, [["????????", "sankashtiChaturthi"], ["???????", "vinayakaChaturthi"]]);
-    folder("????????", state.amavasyaOpen, value => { state.amavasyaOpen = value; }, [["??????", "pradosh"], ["???????", "purnima"], ["?????????", "shivaratri"], ["??????????", "dashavatara"]]);
-    addToggle("?????????", "sankranti");
+    folder("\u0427\u0430\u0442\u0443\u0440\u0442\u0445\u0438", state.chaturthiOpen, value => { state.chaturthiOpen = value; }, [["\u0421\u0430\u043d\u043a\u0430\u0448\u0442\u0438", "sankashtiChaturthi"], ["\u0412\u0438\u043d\u0430\u044f\u043a\u0430", "vinayakaChaturthi"]]);
+    folder("\u0410\u043c\u0430\u0432\u0430\u0441\u044c\u044f", state.amavasyaOpen, value => { state.amavasyaOpen = value; }, [["\u041f\u0440\u0430\u0434\u043e\u0448", "pradosh"], ["\u041f\u0443\u0440\u043d\u0438\u043c\u0430", "purnima"], ["\u0428\u0438\u0432\u0430\u0440\u0430\u0442\u0440\u0438", "shivaratri"], ["\u0414\u0430\u0448\u0430\u0432\u0430\u0442\u0430\u0440\u0430", "dashavatara"]]);
+    addToggle("\u0421\u0430\u043d\u043a\u0440\u0430\u043d\u0442\u0438", "sankranti");
   }
 
   const CHRISTIAN_MODULES = ["christian_orthodox_old", "christian_orthodox_new", "christian_catholic"];
@@ -734,9 +747,9 @@
       const card = document.createElement("article");
       card.className = "event-card panchanga-info-card";
       const title = document.createElement("h3"); title.className = "event-title";
-      title.textContent = state.panchangaInfo.title || "????????";
+      title.textContent = state.panchangaInfo.title || "\u041f\u0430\u043d\u0447\u0430\u043d\u0433\u0430";
       const details = document.createElement("p"); details.className = "event-summary";
-      details.textContent = state.panchangaInfo.description || "??? ?????????? ??? ??? ????????? ?????? ????????.";
+      details.textContent = state.panchangaInfo.description || "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u0430\u043d\u0447\u0430\u043d\u0433\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0434\u043d\u044f.";
       card.append(title, details); dayEvents.append(card);
     }
     if (showMoonInfo) {
