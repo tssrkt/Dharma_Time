@@ -723,7 +723,7 @@
       else if (showPhugpaInfo || showPanchangaInfo) dayEmpty.textContent = "";
       else if (state.monthEvents.length) dayEmpty.textContent = "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.";
       else dayEmpty.textContent = "На выбранную дату событий не найдено.";
-    } else if (!filtered.length) dayEmpty.textContent = "В этой категории нет событий на выбранную дату. Выберите другую вкладку.";
+    } else if (!filtered.length) dayEmpty.textContent = "";
     if (showPhugpaInfo) {
       const info = state.phugpaInfo;
       const card = document.createElement("article");
