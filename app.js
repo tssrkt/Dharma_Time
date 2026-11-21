@@ -764,7 +764,8 @@
   function eventSupplementaryInfo(event) {
     const extra = event && event.extra && typeof event.extra === "object" ? event.extra : {};
     const lines = [];
-    const city = typeof extra.display_city === "string" ? extra.display_city.trim() : "";
+    const cityValue = extra.display_city || extra[locale === "en" ? "reference_city_en" : "reference_city_ru"];
+    const city = typeof cityValue === "string" ? cityValue.trim() : "";
     if (city) lines.push((locale === "en" ? "City: " : "Город: ") + city);
 
     const tibetan = event && event.module === "tibet" ? extra : null;
