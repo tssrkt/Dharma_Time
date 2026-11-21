@@ -147,6 +147,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 }
 @media (max-width: 420px) {
   .app-shell { width: calc(100% - 18px); }
+  .site-header { flex-wrap: wrap; }
+  .city-picker { flex: 1 1 100%; }
   .brand { font-size: 22px; }
   .brand-mark { width: 34px; height: 34px; }
   .city-picker { flex-wrap: wrap; justify-content: flex-end; }
