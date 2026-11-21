@@ -792,7 +792,33 @@
         description.textContent = descriptionText;
         card.append(description);
       }
-      if (rawDescription.length > 140) {
+      dayEvents.append(card);
+
+      const probe = document.createElement("p");
+      probe.className = "event-description";
+      probe.textContent = descriptionText;
+      Object.assign(probe.style, {
+        position: "fixed",
+        left: "-10000px",
+        top: "0",
+        width: Math.max(0, card.clientWidth
+          - parseFloat(getComputedStyle(card).paddingLeft)
+          - parseFloat(getComputedStyle(card).paddingRight)) + "px",
+        margin: "0",
+        visibility: "hidden",
+        pointerEvents: "none"
+      });
+      document.body.append(probe);
+      const probeStyle = getComputedStyle(probe);
+      const lineHeight = parseFloat(probeStyle.lineHeight);
+      const hasMoreThanFiveLines = lineHeight > 0 && probe.scrollHeight > lineHeight * 5 + 1;
+      probe.remove();
+
+      if (!hasMoreThanFiveLines && !suppliedSummary && !isExpanded) {
+        summary.textContent = descriptionText;
+      }
+
+      if (hasMoreThanFiveLines || isExpanded) {
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = "event-toggle";
@@ -804,7 +830,6 @@
         });
         card.append(toggle);
       }
-      dayEvents.append(card);
     });
   }
   async function loadMonthEvents() {
@@ -913,6 +938,11 @@
     loadDayEvents();
   }
   function wireEvents() {
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(renderDayEvents, 120);
+    });
     $("#previous-month").addEventListener("click", () => changeMonth(-1));
     $("#next-month").addEventListener("click", () => changeMonth(1));
     $("#settings-categories").addEventListener("click", event => {
