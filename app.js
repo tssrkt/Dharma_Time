@@ -921,7 +921,9 @@
       const rawDescription = eventDescription(event);
       const descriptionText = formatDescription(rawDescription, event.module);
       const supplementaryText = eventSupplementaryInfo(event);
-      const fullText = [descriptionText, supplementaryText].filter(Boolean).join("\n\n");
+      const cityPrefix = locale === "en" ? "City: " : "Город: ";
+      const hasLeadingCity = supplementaryText.startsWith(cityPrefix);
+      const fullText = [descriptionText, supplementaryText].filter(Boolean).join(hasLeadingCity ? "\n" : "\n\n");
       const summary = document.createElement("p");
       summary.className = "event-summary";
       summary.textContent = fullText;

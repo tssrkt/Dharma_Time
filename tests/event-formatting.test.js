@@ -36,3 +36,8 @@ test("All event titles, including Ekadashi, use uppercase formatting", () => {
   assert.match(source, /eventTitle\.toLocaleUpperCase\(locale\)/);
   assert.doesNotMatch(source, /preserveTitleCase/);
 });
+
+test("City follows event description on the next line without a blank paragraph", () => {
+  assert.ok(source.includes("const hasLeadingCity = supplementaryText.startsWith(cityPrefix);"));
+  assert.ok(source.includes("join(hasLeadingCity"));
+});
