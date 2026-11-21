@@ -411,7 +411,7 @@
             });
             child.classList.add("module-option-child");
             const childRow = document.createElement("div");
-            childRow.className = "module-option-child-row";
+            childRow.className = "module-children module-option-child-row";
             childRow.append(child);
             details.append(childRow);
           }
