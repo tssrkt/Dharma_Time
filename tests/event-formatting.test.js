@@ -86,7 +86,7 @@ test("Calendar loading status is out of flow and error text uses a single line b
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
   assert.match(css, /\.settings-panel \{ position: relative;/);
   assert.match(css, /#calendar-status \{ position: absolute;[^}]*white-space: pre-line;/);
-  assert.match(css, /#calendar-status \{[^}]*line-height: 1\.04;/);
+  assert.match(css, /#calendar-status \{[^}]*line-height: calc\(1\.04em \+ 2px\);/);
 });
 
 test("Event descriptions stay in one paragraph across modules and preserve sentence spacing", () => {
