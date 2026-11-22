@@ -223,6 +223,15 @@ test("Language switch waits for in-flight calendar requests before reloading in 
   assert.doesNotMatch(setter, /monthController\.abort\(\)|dayController\.abort\(\)/);
 });
 
+test("Event description toggle appears only when the description reaches five rendered lines", () => {
+  assert.match(source, /function hasAtLeastFiveLines\(text, card, className = "event-description"\)/);
+  assert.match(source, /probe\.scrollHeight >= lineHeight \* 5 - 1/);
+  assert.match(source, /const needsToggle = hasAtLeastFiveLines\(fullText, card/);
+  assert.match(source, /summary\.classList\.toggle\("event-collapsed", needsToggle && !isExpanded\)/);
+  assert.match(source, /if \(needsToggle\) \{/);
+  assert.doesNotMatch(source, /hasMoreThanThreeLines|hasMoreThanThree/);
+});
+
 test("Language menu tooltip follows the target language in Russian and English", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(html, /id="language-toggle"[^>]*title="Switch to English"/);

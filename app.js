@@ -913,7 +913,7 @@
     dayWeekday.textContent = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date).toLocaleUpperCase(locale);
     dayTitle.textContent = titleCase(new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date)) + (sameDay(date, today) ? tr(" (сегодня)") : "");
   }
-  function hasMoreThanThreeLines(text, card, className = "event-description") {
+  function hasAtLeastFiveLines(text, card, className = "event-description") {
     if (!text) return false;
     const probe = document.createElement("p");
     probe.className = className.split(/\s+/).filter(name => name !== "event-collapsed").join(" ");
@@ -931,7 +931,7 @@
     });
     document.body.append(probe);
     const lineHeight = parseFloat(getComputedStyle(probe).lineHeight);
-    const hasMore = lineHeight > 0 && probe.scrollHeight > lineHeight * 3 + 1;
+    const hasMore = lineHeight > 0 && probe.scrollHeight >= lineHeight * 5 - 1;
     probe.remove();
     return hasMore;
   }
@@ -942,8 +942,9 @@
     details.textContent = fullText;
     dayEvents.append(card);
 
-    const hasMoreThanThree = hasMoreThanThreeLines(fullText, card, details.className);
-    if (hasMoreThanThree || isExpanded) {
+    const needsToggle = hasAtLeastFiveLines(fullText, card, details.className);
+    details.classList.toggle("event-collapsed", needsToggle && !isExpanded);
+    if (needsToggle) {
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "event-toggle";
@@ -1146,19 +1147,13 @@
       summary.textContent = fullText;
       const eventId = String(event.id || index);
       const isExpanded = state.expandedEvents.has(eventId);
-      summary.classList.toggle("event-collapsed", !isExpanded);
       card.append(title, dates);
-      if (!isExpanded && fullText) card.append(summary);
-      if (isExpanded && fullText) {
-        const description = document.createElement("p");
-        description.className = "event-description";
-        description.textContent = fullText;
-        card.append(description);
-      }
+      if (fullText) card.append(summary);
       dayEvents.append(card);
 
-      const hasMoreThanThree = hasMoreThanThreeLines(fullText, card, "event-description");
-      if (hasMoreThanThree || isExpanded) {
+      const needsToggle = hasAtLeastFiveLines(fullText, card, "event-description");
+      summary.classList.toggle("event-collapsed", needsToggle && !isExpanded);
+      if (needsToggle) {
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = "event-toggle";
