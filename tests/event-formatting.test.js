@@ -1,4 +1,4 @@
-﻿const test = require("node:test");
+const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -89,17 +89,18 @@ test("Calendar loading status is out of flow and error text uses a single line b
   assert.match(css, /#calendar-status \{[^}]*line-height: calc\(1\.04em \+ 2px\);/);
 });
 
-test("Event descriptions stay in one paragraph across modules and preserve sentence spacing", () => {
+test("Event descriptions preserve paragraph breaks across modules and normalize spacing", () => {
   const start = source.indexOf("  function formatDescription(value, module) {");
   const end = source.indexOf("  function iconForCategory(", start);
   assert.ok(start >= 0 && end > start, "formatDescription function is present");
   const getFormatter = new Function(`${source.slice(start, end)}; return formatDescription;`);
   const formatDescription = getFormatter();
-  const description = "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.";
-  for (const module of ["sun", "moon", "north_india", "christian_catholic", "tibet"]) {
-    assert.equal(formatDescription(description, module), "First sentence. Second sentence. Third sentence. Fourth sentence.", module);
+  const description = "First sentence.\n\n🎉 Second paragraph.\n\n❤️ Third paragraph.";
+  for (const module of ["sun", "moon", "north_india", "christian_catholic", "tibet", "government_russia"]) {
+    assert.equal(formatDescription(description, module), description, module);
   }
-  assert.equal(formatDescription("  One line.\r\n  Another line.  ", "sun"), "One line. Another line.");
+  assert.equal(formatDescription("  One line.\r\n  Another line.  ", "sun"), "One line.\nAnother line.");
+  assert.equal(formatDescription("First.\n\n\nSecond.", "moon"), "First.\n\nSecond.");
 });
 
 test("City-only supplementary text follows description without a blank paragraph", () => {

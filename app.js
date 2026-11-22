@@ -291,8 +291,10 @@
   function formatDescription(value, module) {
     return String(value || "")
       .replace(/\r\n?/g, "\n")
-      .replace(/[\t ]*\n+[\t ]*/g, " ")
-      .replace(/\s{2,}/g, " ")
+      .split("\n")
+      .map(line => line.replace(/[\t ]+/g, " ").trim())
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
       .trim();
   }
   function iconForCategory(category) { return ({ astronomy: "☾", buddhism: "☸", hindu: "ॐ", misc: "✿" })[category] || "✿"; }
