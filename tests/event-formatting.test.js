@@ -330,7 +330,7 @@ test("At widths up to 450px, brand is centered above the centered city picker", 
   const start = css.indexOf("@media (max-width: 450px)");
   assert.ok(start >= 0, "450px responsive rules are present");
   const responsive = css.slice(start, css.indexOf("\n}", start) + 2);
-  assert.match(responsive, /\.site-header \{ flex-direction: column; align-items: center; \}/);
+  assert.match(responsive, /\.site-header \{ flex-direction: column; align-items: center; gap: 15px; \}/);
   assert.match(responsive, /\.brand \{ justify-content: center; \}/);
   assert.match(responsive, /\.city-picker \{ margin-left: 0; justify-content: center; flex-wrap: nowrap; \}/);
   assert.match(responsive, /#city-search \{ text-align: left; \}/);

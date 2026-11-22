@@ -152,7 +152,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 }
 @media (max-width: 450px) {
   .day-menu-button { width: 61px; height: 61px; }
-  .site-header { flex-direction: column; align-items: center; }
+  .site-header { flex-direction: column; align-items: center; gap: 15px; }
   .brand { justify-content: center; }
   .city-picker { margin-left: 0; justify-content: center; flex-wrap: nowrap; }
   #city-search { text-align: left; }
