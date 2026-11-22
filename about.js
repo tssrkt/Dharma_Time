@@ -14,10 +14,27 @@
     if (saved && typeof saved === "object") settings = saved;
   } catch (_) { /* Use the default city when storage is unavailable. */ }
 
+  const locale = settings.locale === "en" ? "en" : "ru";
+  document.documentElement.lang = locale;
+  document.title = locale === "en" ? "About · Dharma Time" : "О проекте · Dharma Time";
+  const description = document.querySelector('meta[name="description"]');
+  if (description) description.content = locale === "en" ? "About Dharma Time" : "О календаре Dharma Time";
+  const aboutTitle = document.querySelector("#about-title");
+  if (aboutTitle) aboutTitle.textContent = locale === "en" ? "About" : "О проекте";
+  const placeholder = document.querySelector(".about-placeholder");
+  if (placeholder) placeholder.textContent = locale === "en"
+    ? "This page is under development. Text and links will be added later."
+    : "Страница в разработке. Текст и ссылки будут добавлены позже.";
+  const cityLabel = document.querySelector(".city-picker label");
+  if (cityLabel) cityLabel.textContent = locale === "en" ? "Your city:" : "Ваш город:";
+  const brand = document.querySelector(".brand");
+  if (brand) brand.setAttribute("aria-label", locale === "en" ? "Dharma Time — home" : "Dharma Time — на главную");
   const defaultCity = "Москва";
   const displayName = settings.cityDisplayName ||
     ((settings.cityName || defaultCity) === defaultCity ? "Москва (Россия)" : settings.cityName);
-  input.value = displayName;
+  input.value = (settings.cityName || defaultCity) === defaultCity
+    ? (locale === "en" ? "Moscow (Russia)" : "Москва (Россия)")
+    : (settings.cityDisplayName || settings.cityName);
   const measureCanvas = document.createElement("canvas");
   const measureContext = measureCanvas.getContext("2d");
 

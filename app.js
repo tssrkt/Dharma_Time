@@ -97,8 +97,110 @@
   const dayStatus = $("#day-status");
   const moduleList = $("#module-list");
   const today = new Date();
-  const locale = "ru";
-  state.settings.locale = locale;
+  let locale = "ru";
+  const UI_EN = {
+    "Астрономия":"Astronomy","Луна":"Moon","Солнце":"Sun","Затмения":"Eclipses","Метеоры":"Meteors","Кометы":"Comets","Планеты":"Planets","Земля":"Earth",
+    "Тхеравада":"Theravada","Шри-Ланка":"Sri Lanka","Таиланд":"Thailand","Мьянма":"Myanmar","Махаяна":"Mahayana","Тибет":"Tibet","Китай":"China","Непал":"Nepal","Япония":"Japan","Вьетнам":"Vietnam",
+    "Индуизм":"Hinduism","Северная Индия":"Northern India","Южная Индия":"Southern India","Индонезия и Бали":"Indonesia and Bali","Другое":"Other",
+    "Католический календарь":"Catholic calendar","Православный календарь (старый стиль)":"Orthodox calendar (old style)","Православный календарь (новый стиль)":"Orthodox calendar (new style)",
+    "Именины (католические)":"Name days (Catholic)","Именины (православные, старый стиль)":"Name days (Orthodox, old style)","Именины (православные, новый стиль)":"Name days (Orthodox, new style)",
+    "Государственные праздники России":"Russian public holidays","Государственные праздники Украины":"Ukrainian public holidays","Международные даты":"International observances","Профессиональные праздники":"Professional observances","Забавные даты":"Fun dates",
+    "Христианство":"Christianity","Католицизм":"Catholicism","Православие":"Orthodoxy","Старое":"Old style","Новое":"New style","Именины":"Name days","Государственные":"Public holidays","Россия":"Russia","Украина":"Ukraine","Международные":"International","Профессиональные":"Professional","Забавные даты":"Fun dates",
+    "Пугпа":"Phugpa daily details","Сок-Вонг":"Soc Vong","Панчангa":"Panchanga","Панчангa":"Panchanga","Вайшнава":"Vaishnava","Экадаши":"Ekadashi","Гаудия":"Gaudiya","Шри":"Sri","Мадхва":"Madhva","Смарта":"Smarta",
+    "Чатуртхи":"Chaturthi","Санкашты":"Sankashti Chaturthi","Винаяка":"Vinayaka Chaturthi","Амавасья":"Amavasya","Прадош":"Pradosh","Пурнима":"Purnima","Шиваратри":"Shivaratri","Дашаватара":"Dashavatara","Санкранти":"Sankranti","Пурниманта":"Purnimanta","Аманта":"Amanta",
+    "Полнолуние":"Full Moon","Последняя четверть":"Last Quarter","Новолуние":"New Moon","Первая четверть":"First Quarter","Фаза Луны: ":"Moon phase: ","События: ":"Events: ","Именины: ":"Name days: ",
+    "Православие (новое)":"Orthodoxy (new style)","Православие (старое)":"Orthodoxy (old style)","Католицизм":"Catholicism",
+    "Сегодня":"Today"," (сегодня)":" (today)","Подробнее":"Read more","Свернуть":"Collapse","Город: ":"City: ",
+    "Включите хотя бы один календарь в настройках.":"Enable at least one calendar in the settings.",
+    "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.":"There are no events for the selected date. Choose a date marked with a dot in the calendar to see events.",
+    "На выбранную дату событий не найдено.":"No events were found for the selected date.",
+    "Сервис временно ограничил частоту запросов. Попробуйте немного позже.":"The service has temporarily limited requests. Please try again shortly.",
+    "Не удалось загрузить календарь.\nПроверьте подключение и попробуйте позже.":"Could not load the calendar.\nCheck your connection and try again later.",
+    "Загрузка календаря…":"Loading calendar…","Загружаем события…":"Loading events…","Сбросить настройки":"Reset settings","Выберите дату":"Select a date","Выберите дату в календаре.":"Select a date in the calendar.",
+    "Предыдущий месяц":"Previous month","Следующий месяц":"Next month","Дни месяца":"Days of the month","Календарь и настройки":"Calendar and settings","Выбор календарей":"Choose calendars","Категории календарей":"Calendar categories","События выбранного дня":"Events for the selected day","Категории событий":"Event categories","Открыть меню":"Open menu","Главное меню":"Main menu","Ваш город:":"Your city:",
+    "Темная тема":"Dark theme","Светлая тема":"Light theme","Будет доступно позже":"Coming soon",
+    "Тёмная тема":"Dark theme","Светлая тема":"Light theme","Панчанга":"Panchanga","Панчанга (СВОДКА ДНЯ)":"PANCHANGA (DAILY SUMMARY)",
+    "ПУГПА (СВОДКА ДНЯ)":"PHUGPA (DAILY SUMMARY)","Загрузка событий:":"Loading events:","Загрузка событий…":"Loading events…",
+    "Сервис временно ограничил частоту запросов. Попробуйте немного позже.":"The service has temporarily limited requests. Please try again shortly.",
+    "Не удалось загрузить календарь.\\nПроверьте подключение и попробуйте позже.":"Could not load the calendar.\\nCheck your connection and try again later.",
+    "Старое":"Old style","Новое":"New style","Пурниманта":"Purnimanta","Амaнта":"Amanta",
+    "Включите хотя бы один календарь в настройках.":"Enable at least one calendar in the settings.",
+    "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.":"There are no events for the selected date. Choose a date marked with a dot in the calendar to see events.",
+    "На выбранную дату событий не найдено.":"No events were found for the selected date.",
+    "Загрузка календаря…":"Loading calendar…","Загружаем события…":"Loading events…",
+    "Выберите дату в календаре.":"Select a date in the calendar.","Выберите дату":"Select a date",
+    "Проверьте подключение и попробуйте позже.":"Check your connection and try again later.",
+    "События: ":"Events: ","Фаза Луны: ":"Moon phase: ","Именины: ":"Name days: ",
+    "Предыдущая четверть":"Last Quarter","Православие":"Orthodoxy","Христианство":"Christianity",
+    "Россия":"Russia","Украина":"Ukraine","Старый стиль":"Old style","Новый стиль":"New style",
+    "Високосный месяц ":"Leap month ","Месяц ":"Month ","Год ":"Year ","День ":"Day ","Титхи":"Tithi","Пакша":"Paksha",
+    "ПУГПА (СВОДКА ДНЯ)":"PHUGPA (DAILY SUMMARY)","Панчанга (СВОДКА ДНЯ)":"PANCHANGA (DAILY SUMMARY)",
+    "Пугпа":"Phugpa","Сок-Вонг":"Soc Vong","Панчанга":"Panchanga","Чатуртхи":"Chaturthi","Санкашты":"Sankashti Chaturthi",
+    "Винаяка":"Vinayaka Chaturthi","Амавасья":"Amavasya","Прадош":"Pradosh","Пурнима":"Purnima","Шиваратри":"Shivaratri",
+    "Дашаватара":"Dashavatara","Санкранти":"Sankranti","Пурниманта":"Purnimanta","Аманта":"Amanta",
+    "Год деревян":"Wood year","Год огнен":"Fire year","Год землян":"Earth year","Год железн":"Metal year","Год водян":"Water year",
+    "Пропущенный цеше жаг (Chad): ":"Skipped Tseshe Zhag (Chad): ","Сдвоенный цеше жаг (Lhag): ":"Doubled Tseshe Zhag (Lhag): ","Цеше жаг: ":"Tseshe Zhag: "
+  };
+  function tr(text) { return locale === "en" ? (UI_EN[text] || text) : text; }
+  function defaultCityDisplayName() { return locale === "en" ? "Moscow (Russia)" : "Москва (Россия)"; }
+  function setLocale(nextLocale) {
+    const next = nextLocale === "en" ? "en" : "ru";
+    if (next === locale) return;
+    locale = next;
+    state.settings.locale = locale;
+    saveSettings();
+    applyStaticTranslations();
+    renderModuleList();
+    renderCalendar();
+    renderDayHeading();
+    renderDayEvents();
+    if (getSelectedModules().length) { loadMonthEvents(); loadDayEvents(); }
+    else { calendarStatus.textContent = ""; dayStatus.textContent = ""; }
+    const input = $("#city-search");
+    if (input) {
+      input.value = state.settings.cityDisplayName || (state.settings.cityName === DEFAULTS.cityName ? defaultCityDisplayName() : state.settings.cityName);
+      const wrap = input.closest(".city-search-wrap");
+      if (wrap) wrap.style.width = "auto";
+    }
+  }
+  function applyStaticTranslations() {
+    document.documentElement.lang = locale;
+    const description = $("meta[name='description']");
+    if (description) description.content = locale === "en" ? "Dharma Time calendar of Buddhist, Hindu and astronomical events" : "Календарь Dharma Time";
+    document.title = locale === "en" ? "Dharma Time — Calendar" : "Dharma Time — календарь";
+    const setText = (selector, value) => { const node = $(selector); if (node) node.textContent = value; };
+    const setAttr = (selector, attr, value) => { const node = $(selector); if (node) node.setAttribute(attr, value); };
+    setText(".city-picker label", locale === "en" ? "Your city:" : "Ваш город:");
+    const cityInput = $("#city-search");
+    if (cityInput && (!state.settings.cityDisplayName || state.settings.cityName === DEFAULTS.cityName)) cityInput.value = defaultCityDisplayName();
+    setAttr(".brand", "aria-label", locale === "en" ? "Dharma Time — home" : "Dharma Time — на главную");
+    setAttr(".calendar-column", "aria-label", tr("Календарь и настройки"));
+    setAttr("#previous-month", "aria-label", tr("Предыдущий месяц"));
+    setAttr("#next-month", "aria-label", tr("Следующий месяц"));
+    setAttr("#calendar-grid", "aria-label", tr("Дни месяца"));
+    setAttr(".settings-panel", "aria-label", tr("Выбор календарей"));
+    setAttr("#settings-categories", "aria-label", tr("Категории календарей"));
+    setAttr(".day-panel", "aria-label", tr("События выбранного дня"));
+    setAttr("#day-menu-button", "aria-label", tr("Открыть меню"));
+    setAttr("#day-menu", "aria-label", tr("Главное меню"));
+    setAttr("#event-categories", "aria-label", tr("Категории событий"));
+    const reset = $("#reset-settings"); if (reset) reset.textContent = tr("Сбросить настройки");
+    const menuLanguage = $("#language-toggle"); if (menuLanguage) { menuLanguage.textContent = locale === "en" ? "РУССКИЙ" : "ENGLISH"; menuLanguage.setAttribute("aria-label", locale === "en" ? "Switch to Russian" : "Switch to English"); }
+    const theme = $("#theme-toggle"); if (theme) theme.textContent = document.documentElement.dataset.theme === "dark" ? (locale === "en" ? "LIGHT THEME" : "СВЕТЛАЯ ТЕМА") : (locale === "en" ? "DARK THEME" : "ТЁМНАЯ ТЕМА");
+    const telegram = $$(".day-menu-item").find(node => node.textContent.includes("TELEGRAM") || node.textContent.includes("ТЕЛЕГРАМ"));
+    if (telegram) telegram.textContent = locale === "en" ? "TELEGRAM BOT" : "TELEGRAM-БОТ";
+    const aboutLink = $$(".day-menu-item").find(node => node.getAttribute("href") === "about.html");
+    if (aboutLink) aboutLink.textContent = locale === "en" ? "ABOUT" : "О ПРОЕКТЕ";
+    const weekdays = $$(".weekday-row span");
+    const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+    const monday = new Date(2024, 0, 1);
+    weekdays.forEach((node, index) => { node.textContent = weekdayFormatter.format(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index)); });
+    const tabs = { astronomy: "Астрономические", buddhism: "Буддийские", hindu: "Индуистские", misc: "Другие" };
+    $$("#settings-categories .image-tab").forEach(button => setAttrFrom(button, "aria-label", locale === "en" ? ({astronomy:"Astronomical calendars", buddhism:"Buddhist calendars", hindu:"Hindu calendars", misc:"Other calendars"})[button.dataset.category] : tabs[button.dataset.category] + " календари"));
+    $$("#event-categories .image-tab").forEach(button => setAttrFrom(button, "aria-label", locale === "en" ? ({astronomy:"Astronomical events", buddhism:"Buddhist events", hindu:"Hindu events", misc:"Other events"})[button.dataset.category] : tabs[button.dataset.category] + " события"));
+    setText("#day-empty", tr("Выберите дату в календаре."));
+  }
+  function setAttrFrom(node, attr, value) { node.setAttribute(attr, value); }
   let selectedDayKey = dateKey(state.selectedDate);
 
   function dateKey(date) {
@@ -142,6 +244,7 @@
       };
       if (!state.selectedModules.has("north_india") && !state.selectedModules.has("south_india")) resetHinduOptions();
       normalizeExclusiveModuleGroups();
+      locale = stored.locale === "en" ? "en" : "ru";
       state.settings = { ...DEFAULTS, ...stored, locale };
       if (!state.settings.cityName || !Number.isFinite(Number(state.settings.latitude)) || !Number.isFinite(Number(state.settings.longitude)) || !state.settings.timezone) {
         state.settings.cityName = DEFAULTS.cityName;
@@ -151,7 +254,8 @@
       }
       state.settings.selectedModules = Array.from(state.selectedModules);
     } catch (_) {
-      state.settings = { ...DEFAULTS };
+      locale = "ru";
+      state.settings = { ...DEFAULTS, locale };
       state.selectedModules = new Set(DEFAULTS.selectedModules);
     }
   }
@@ -195,7 +299,7 @@
     if (state.settings.cityName && state.settings.latitude !== "" && state.settings.longitude !== "") {
       const lat = Number(state.settings.latitude), lon = Number(state.settings.longitude);
       if (Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-        params.set("city_name", state.settings.cityName.trim());
+        params.set("city_name", locale === "en" && state.settings.cityName === DEFAULTS.cityName ? "Moscow" : state.settings.cityName.trim());
         params.set("latitude", String(lat));
         params.set("longitude", String(lon));
       }
@@ -272,8 +376,8 @@
   }
   function safeErrorMessage(error) {
     if (error && error.name === "AbortError") return "";
-    if (error && error.status === 429) return "Сервис временно ограничил частоту запросов. Попробуйте немного позже.";
-    return "Не удалось загрузить календарь.\nПроверьте подключение и попробуйте позже.";
+    if (error && error.status === 429) return tr("Сервис временно ограничил частоту запросов. Попробуйте немного позже.");
+    return tr("Не удалось загрузить календарь.\nПроверьте подключение и попробуйте позже.");
   }
   function normalizeEvents(payload) {
     if (Array.isArray(payload)) return payload;
@@ -398,8 +502,8 @@
         const hasRegularEvents = dayEvents.some(event => !isNameDayEvent(event));
         button.classList.toggle("has-name-days", hasNameDays);
         button.classList.toggle("has-regular-events", hasRegularEvents);
-        const phaseLabel = moonPhase ? " Фаза Луны: " + moonPhase.label + "." : "";
-        button.setAttribute("aria-label", longDate(date) + "." + phaseLabel + " События: " + dayEvents.map(event => String(event.title || "")).filter(Boolean).join("; "));
+        const phaseLabel = moonPhase ? " " + tr("Фаза Луны: ") + tr(moonPhase.label) + "." : "";
+        button.setAttribute("aria-label", longDate(date) + "." + phaseLabel + " " + tr("События: ") + dayEvents.map(event => String(event.title || "")).filter(Boolean).join("; "));
         const tooltip = document.createElement("span");
         tooltip.className = "event-tooltip";
         tooltip.setAttribute("aria-hidden", "true");
@@ -455,7 +559,7 @@
         const details = document.createElement("details");
         details.open = true;
         const summary = document.createElement("summary");
-        summary.textContent = group.label;
+        summary.textContent = tr(group.label);
         details.append(summary);
         group.modules.forEach(([id, label]) => {
           const parentOption = makeModuleOption(id, label);
@@ -651,7 +755,7 @@
     nameDays.open = state.nameDaysOpen;
     nameDays.addEventListener("toggle", () => { state.nameDaysOpen = nameDays.open; });
     const nameDaysSummary = document.createElement("summary");
-    nameDaysSummary.textContent = "Именины";
+    nameDaysSummary.textContent = tr("Именины");
     nameDays.append(nameDaysSummary);
     const nameDayChildren = document.createElement("div");
     nameDayChildren.className = "module-children";
@@ -730,7 +834,7 @@
       if (type === "checkbox" || input.checked) onChange(input.checked);
     });
     const text = document.createElement("span");
-    text.textContent = label;
+    text.textContent = tr(label);
     row.append(input, text);
     return row;
   }
@@ -769,7 +873,7 @@
   function renderDayHeading() {
     const date = state.selectedDate;
     dayWeekday.textContent = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date).toLocaleUpperCase(locale);
-    dayTitle.textContent = titleCase(new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date)) + (sameDay(date, today) ? " (сегодня)" : "");
+    dayTitle.textContent = titleCase(new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date)) + (sameDay(date, today) ? tr(" (сегодня)") : "");
   }
   function hasMoreThanThreeLines(text, card, className = "event-description") {
     if (!text) return false;
@@ -805,7 +909,7 @@
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "event-toggle";
-      toggle.textContent = isExpanded ? "Свернуть" : "Подробнее";
+      toggle.textContent = isExpanded ? tr("Свернуть") : tr("Подробнее");
       toggle.addEventListener("click", () => {
         if (state.expandedEvents.has(id)) state.expandedEvents.delete(id);
         else state.expandedEvents.add(id);
@@ -918,10 +1022,10 @@
     });
     dayEmpty.hidden = filtered.length > 0 || showMoonInfo || showPhugpaInfo || showPanchangaInfo;
     if (!hasAny) {
-      if (!getSelectedModules().length) dayEmpty.textContent = "Включите хотя бы один календарь в настройках.";
+      if (!getSelectedModules().length) dayEmpty.textContent = tr("Включите хотя бы один календарь в настройках.");
       else if (showPhugpaInfo || showPanchangaInfo) dayEmpty.textContent = "";
-      else if (state.monthEvents.length) dayEmpty.textContent = "На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.";
-      else dayEmpty.textContent = "На выбранную дату событий не найдено.";
+      else if (state.monthEvents.length) dayEmpty.textContent = tr("На выбранную дату событий нет. Выберите в календаре дату с точкой — там есть события.");
+      else dayEmpty.textContent = tr("На выбранную дату событий не найдено.");
     } else if (!filtered.length) dayEmpty.textContent = "";
     if (showPhugpaInfo) {
       const info = state.phugpaInfo;
@@ -929,7 +1033,7 @@
       card.className = "event-card phugpa-info-card";
       const title = document.createElement("h3");
       title.className = "event-title";
-      title.textContent = "\u{1F538} \u041f\u0423\u0413\u041f\u0410 (\u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f)";
+      title.textContent = "\u{1F538} " + tr("ПУГПА (СВОДКА ДНЯ)");
       const details = document.createElement("p");
       details.className = "event-description phugpa-summary";
       details.textContent = String(info.description || "").replace(/^\u{1F538}\s*/u, "");
@@ -941,7 +1045,7 @@
       const card = document.createElement("article");
       card.className = "event-card panchanga-info-card";
       const title = document.createElement("h3"); title.className = "event-title";
-      title.textContent = "\u{1F338} \u041f\u0410\u041d\u0427\u0410\u041d\u0413\u0410 (\u0421\u0412\u041e\u0414\u041a\u0410 \u0414\u041d\u042f)";
+      title.textContent = "\u{1F338} " + tr("Панчанга (СВОДКА ДНЯ)");
       const details = document.createElement("p"); details.className = "event-description panchanga-summary";
       const panchangaDescription = String(state.panchangaInfo.description || "").replace(/^\u{1F338}\s*/u, "");
       details.textContent = panchangaDescription;
@@ -1020,7 +1124,7 @@
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = "event-toggle";
-        toggle.textContent = isExpanded ? "Свернуть" : "Подробнее";
+        toggle.textContent = isExpanded ? tr("Свернуть") : tr("Подробнее");
         toggle.addEventListener("click", () => {
           const id = String(event.id || index);
           if (state.expandedEvents.has(id)) state.expandedEvents.delete(id); else state.expandedEvents.add(id);
@@ -1041,7 +1145,7 @@
     const controller = new AbortController();
     state.monthController = controller;
     const requestId = ++state.monthRequestId;
-    calendarStatus.textContent = "Загружаем события…";
+    calendarStatus.textContent = tr("Загружаем события…");
     try {
       const payload = await fetchJson(API_BASE + "/api/calendar/month?" + params.toString(), controller.signal);
       if (requestId !== state.monthRequestId) return;
@@ -1073,7 +1177,7 @@
     state.dayController = controller;
     const requestId = ++state.dayRequestId;
     const keyAtRequest = dateKey(state.selectedDate);
-    dayStatus.textContent = "Загружаем события…";
+    dayStatus.textContent = tr("Загружаем события…");
     dayEmpty.hidden = true;
     try {
       const payload = await fetchJson(API_BASE + "/api/calendar/day?" + params.toString(), controller.signal);
@@ -1138,7 +1242,7 @@
     const wrap = input && input.closest(".city-search-wrap");
     if (!input || !list || !wrap) return;
     const cityName = state.settings.cityName || DEFAULTS.cityName;
-    input.value = state.settings.cityDisplayName || (cityName === DEFAULTS.cityName ? "Москва (Россия)" : cityName);
+    input.value = state.settings.cityDisplayName || (cityName === DEFAULTS.cityName ? defaultCityDisplayName() : cityName);
     const measureCanvas = document.createElement("canvas");
     const measureContext = measureCanvas.getContext("2d");
     function resizeInput() {
@@ -1210,7 +1314,7 @@
       }, 250);
     });
     input.addEventListener("focus", () => {
-      const selectedDisplayName = state.settings.cityDisplayName || (state.settings.cityName === DEFAULTS.cityName ? "Москва (Россия)" : state.settings.cityName);
+      const selectedDisplayName = state.settings.cityDisplayName || (state.settings.cityName === DEFAULTS.cityName ? defaultCityDisplayName() : state.settings.cityName);
       if (input.value.trim().length >= 2 && input.value !== selectedDisplayName) input.dispatchEvent(new Event("input"));
     });
     input.addEventListener("keydown", event => { if (event.key === "Escape") closeResults(); });
@@ -1223,7 +1327,7 @@
       const isDark = theme === "dark";
       document.documentElement.dataset.theme = isDark ? "dark" : "light";
       button.setAttribute("aria-pressed", String(isDark));
-      button.textContent = isDark ? "LIGHT THEME" : "DARK THEME";
+      button.textContent = isDark ? (locale === "en" ? "LIGHT THEME" : "СВЕТЛАЯ ТЕМА") : (locale === "en" ? "DARK THEME" : "ТЁМНАЯ ТЕМА");
       const themeColor = document.querySelector('meta[name="theme-color"]');
       if (themeColor) themeColor.setAttribute("content", isDark ? "#171c19" : "#f6f2e9");
     };
@@ -1280,9 +1384,12 @@
       renderDayEvents();
     });
     $("#reset-settings").addEventListener("click", resetSettings);
+    const languageToggle = $("#language-toggle");
+    if (languageToggle) languageToggle.addEventListener("click", () => setLocale(locale === "en" ? "ru" : "en"));
   }
   function init() {
     loadSettings();
+    applyStaticTranslations();
     selectedDayKey = dateKey(state.selectedDate);
     renderCalendar();
     renderModuleList();

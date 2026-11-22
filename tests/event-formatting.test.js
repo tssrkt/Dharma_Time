@@ -82,7 +82,7 @@ test("All event titles, including Ekadashi, use uppercase formatting", () => {
 });
 
 test("Calendar loading status is out of flow and error text uses a single line break", () => {
-  assert.ok(source.includes('return "Не удалось загрузить календарь.\\nПроверьте подключение и попробуйте позже."'));
+  assert.ok(source.includes('return tr("Не удалось загрузить календарь.\\nПроверьте подключение и попробуйте позже.")'));
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
   assert.match(css, /\.settings-panel \{ position: relative;/);
   assert.match(css, /#calendar-status \{ position: absolute;[^}]*white-space: pre-line;/);
@@ -142,7 +142,7 @@ test("Dark theme is available from the day menu and persisted locally", () => {
   assert.match(source, /localStorage\.getItem\("dharma-time-theme-v1"\)/);
   assert.match(source, /localStorage\.setItem\("dharma-time-theme-v1", nextTheme\)/);
   assert.match(source, /document\.documentElement\.dataset\.theme = isDark \? "dark" : "light"/);
-  assert.match(source, /button\.textContent = isDark \? "LIGHT THEME" : "DARK THEME"/);
+  assert.match(source, /button\.textContent = isDark \? \(locale === "en" \? "LIGHT THEME" : "СВЕТЛАЯ ТЕМА"\) : \(locale === "en" \? "DARK THEME" : "ТЁМНАЯ ТЕМА"\)/);
   assert.match(css, /:root\[data-theme="dark"\]\s*\{[^}]*color-scheme: dark;/s);
   assert.match(css, /:root\[data-theme="dark"\] \.event-card/);
   assert.match(css, /:root\[data-theme="dark"\] \.day-menu/);
@@ -195,4 +195,26 @@ test("Calendar cache returns valid entries, separates request URLs, expires entr
   )(brokenStorage, "test-cache:", 300000, { now: () => now });
   assert.equal(safeHelpers.readApiCache(monthUrl), null);
   assert.doesNotThrow(() => safeHelpers.writeApiCache(monthUrl, payload));
+});
+
+
+test("Language switcher enables RU/EN, persists locale, and rerenders the current page", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.ok(html.includes('id="language-toggle"'));
+  assert.doesNotMatch(html, /id="language-toggle"[^>]*disabled/);
+  assert.ok(source.includes('let locale = "ru"'));
+  assert.ok(source.includes('locale = stored.locale === "en" ? "en" : "ru"'));
+  assert.ok(source.includes('state.settings.locale = locale'));
+  assert.ok(source.includes('params.set("locale", state.settings.locale || locale)'));
+  assert.ok(source.includes('new URLSearchParams({ q: query, locale: state.settings.locale || locale })'));
+  assert.ok(source.includes('document.documentElement.lang = locale'));
+  assert.ok(source.includes('function setLocale(nextLocale)'));
+  assert.ok(source.includes('languageToggle.addEventListener("click", () => setLocale'));
+  assert.ok(source.includes('function tr(text)'));
+  assert.ok(source.includes('text.textContent = tr(label)'));
+  assert.ok(source.includes('function resetSettings()'));
+  assert.ok(source.includes('state.settings = { ...DEFAULTS, locale }'));
+  const about = fs.readFileSync(path.join(__dirname, "..", "about.js"), "utf8");
+  assert.ok(about.includes('settings.locale === "en"'));
+  assert.ok(about.includes('document.documentElement.lang = locale'));
 });
