@@ -223,6 +223,15 @@ test("Language switch waits for in-flight calendar requests before reloading in 
   assert.doesNotMatch(setter, /monthController\.abort\(\)|dayController\.abort\(\)/);
 });
 
+test("Language menu tooltip follows the target language in Russian and English", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.match(html, /id="language-toggle"[^>]*title="Switch to English"/);
+  assert.match(source, /const languageTooltip = locale === "en"/);
+  assert.match(source, /\\u041f\\u0435/);
+  assert.match(source, /menuLanguage\.title = languageTooltip/);
+  assert.match(source, /menuLanguage\.setAttribute\("aria-label", languageTooltip\)/);
+});
+
 test("Language switcher enables RU/EN, persists locale, and rerenders the current page", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.ok(html.includes('id="language-toggle"'));

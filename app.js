@@ -210,7 +210,7 @@
     setAttr("#day-menu", "aria-label", tr("Главное меню"));
     setAttr("#event-categories", "aria-label", tr("Категории событий"));
     const reset = $("#reset-settings"); if (reset) reset.textContent = tr("Сбросить настройки");
-    const menuLanguage = $("#language-toggle"); if (menuLanguage) { menuLanguage.textContent = locale === "en" ? "РУССКИЙ" : "ENGLISH"; menuLanguage.setAttribute("aria-label", locale === "en" ? "Switch to Russian" : "Switch to English"); }
+    const menuLanguage = $("#language-toggle"); if (menuLanguage) { const languageTooltip = locale === "en" ? "\u041f\u0435\u0440\u0435\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u043d\u0430 \u0440\u0443\u0441\u0441\u043a\u0438\u0439 \u044f\u0437\u044b\u043a" : "Switch to English"; menuLanguage.textContent = locale === "en" ? "\u0420\u0443\u0441\u0441\u043a\u0438\u0439" : "ENGLISH"; menuLanguage.title = languageTooltip; menuLanguage.setAttribute("aria-label", languageTooltip); }
     const theme = $("#theme-toggle"); if (theme) theme.textContent = document.documentElement.dataset.theme === "dark" ? (locale === "en" ? "LIGHT THEME" : "СВЕТЛАЯ ТЕМА") : (locale === "en" ? "DARK THEME" : "ТЁМНАЯ ТЕМА");
     const telegram = $$(".day-menu-item").find(node => node.textContent.includes("TELEGRAM") || node.textContent.includes("ТЕЛЕГРАМ"));
     if (telegram) telegram.textContent = locale === "en" ? "TELEGRAM BOT" : "TELEGRAM-БОТ";
