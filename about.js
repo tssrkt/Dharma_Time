@@ -3,6 +3,14 @@
 
   const API_BASE = "https://dharma-time.enzonic.dev";
   const STORAGE_KEY = "dharma-time-settings-v1";
+  const theme = (() => {
+    try { return localStorage.getItem("dharma-time-theme-v1") === "dark" ? "dark" : "light"; }
+    catch (_) { return "light"; }
+  })();
+  document.documentElement.dataset.theme = theme;
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = theme === "dark" ? "#171c19" : "#f6f2e9";
+
   const input = document.querySelector("#city-search");
   const list = document.querySelector("#city-results");
   const wrap = input && input.closest(".city-search-wrap");

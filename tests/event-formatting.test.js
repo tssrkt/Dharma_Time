@@ -243,3 +243,11 @@ test("Lotus logo is white only in dark theme", () => {
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
   assert.match(css, /:root\[data-theme="dark"\] \.brand-mark\s*\{\s*filter:\s*brightness\(0\) invert\(1\);\s*\}/);
 });
+
+
+test("About page applies the persisted theme and matching browser theme color", () => {
+  const about = fs.readFileSync(path.join(__dirname, "..", "about.js"), "utf8");
+  assert.match(about, /localStorage\.getItem\("dharma-time-theme-v1"\) === "dark" \? "dark" : "light"/);
+  assert.match(about, /document\.documentElement\.dataset\.theme = theme/);
+  assert.match(about, /themeColor\.content = theme === "dark" \? "#171c19" : "#f6f2e9"/);
+});
