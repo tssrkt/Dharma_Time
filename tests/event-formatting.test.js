@@ -81,6 +81,13 @@ test("All event titles, including Ekadashi, use uppercase formatting", () => {
   assert.doesNotMatch(source, /preserveTitleCase/);
 });
 
+test("Calendar loading status is out of flow and calendar errors have two paragraphs", () => {
+  assert.ok(source.includes('return "Не удалось загрузить календарь.\\n\\nПроверьте подключение и попробуйте позже."'));
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(css, /\.settings-panel \{ position: relative;/);
+  assert.match(css, /#calendar-status \{ position: absolute;[^}]*white-space: pre-line;/);
+});
+
 test("Event descriptions stay in one paragraph across modules and preserve sentence spacing", () => {
   const start = source.indexOf("  function formatDescription(value, module) {");
   const end = source.indexOf("  function iconForCategory(", start);
