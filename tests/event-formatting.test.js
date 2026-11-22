@@ -147,3 +147,52 @@ test("Dark theme is available from the day menu and persisted locally", () => {
   assert.match(css, /:root\[data-theme="dark"\] \.event-card/);
   assert.match(css, /:root\[data-theme="dark"\] \.day-menu/);
 });
+
+test("Calendar month/day API responses use a five-minute session cache keyed by full request URL", () => {
+  assert.match(source, /const API_CACHE_PREFIX = "dharma-time-api-cache-v1:"/);
+  assert.match(source, /const API_CACHE_TTL_MS = 5 \* 60 \* 1000/);
+  assert.match(source, /function readApiCache\(url\)/);
+  assert.match(source, /function writeApiCache\(url, payload\)/);
+  assert.match(source, /API_CACHE_PREFIX \+ url/);
+  assert.match(source, /entry\.expiresAt <= Date\.now\(\)/);
+  assert.match(source, /if \(cached && cached\.hit\) return cached\.payload/);
+  assert.match(source, /if \(response\.ok\) \{\s*const payload = await response\.json\(\);\s*writeApiCache\(url, payload\);\s*return payload;/);
+  assert.match(source, /url\.includes\("\/api\/calendar\/month\?"\).*url\.includes\("\/api\/calendar\/day\?"/s);
+  assert.match(source, /catch \(_\) \{\s*\/\/ Caching is optional; the calendar must work when sessionStorage is unavailable or full\./);
+});
+
+test("Calendar cache returns valid entries, separates request URLs, expires entries, and tolerates storage errors", () => {
+  const start = source.indexOf("  function readApiCache(url) {");
+  const end = source.indexOf("  async function fetchJson(url, signal) {", start);
+  assert.ok(start >= 0 && end > start, "cache helpers are present");
+  let now = 1000;
+  const values = new Map();
+  const storage = {
+    getItem: key => values.has(key) ? values.get(key) : null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: key => values.delete(key)
+  };
+  const helpers = new Function("sessionStorage", "API_CACHE_PREFIX", "API_CACHE_TTL_MS", "Date",
+    source.slice(start, end) + "; return { readApiCache, writeApiCache };"
+  )(storage, "test-cache:", 300000, { now: () => now });
+  const monthUrl = "https://example.test/api/calendar/month?modules=moon&month=11";
+  const otherMonthUrl = "https://example.test/api/calendar/month?modules=moon&month=12";
+  const payload = { events: [{ id: "moon-1" }] };
+  helpers.writeApiCache(monthUrl, payload);
+  assert.deepEqual(helpers.readApiCache(monthUrl), { hit: true, payload });
+  assert.equal(helpers.readApiCache(otherMonthUrl), null);
+  now += 300001;
+  assert.equal(helpers.readApiCache(monthUrl), null);
+  assert.equal(values.size, 0);
+
+  const brokenStorage = {
+    getItem() { throw new Error("storage unavailable"); },
+    setItem() { throw new Error("storage unavailable"); },
+    removeItem() { throw new Error("storage unavailable"); }
+  };
+  const safeHelpers = new Function("sessionStorage", "API_CACHE_PREFIX", "API_CACHE_TTL_MS", "Date",
+    source.slice(start, end) + "; return { readApiCache, writeApiCache };"
+  )(brokenStorage, "test-cache:", 300000, { now: () => now });
+  assert.equal(safeHelpers.readApiCache(monthUrl), null);
+  assert.doesNotThrow(() => safeHelpers.writeApiCache(monthUrl, payload));
+});

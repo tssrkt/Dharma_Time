@@ -5,6 +5,8 @@
   const STORAGE_KEY = "dharma-time-settings-v1";
   const RETRY_LIMIT = 1;
   const RETRY_DELAY_CAP_MS = 8000;
+  const API_CACHE_PREFIX = "dharma-time-api-cache-v1:";
+  const API_CACHE_TTL_MS = 5 * 60 * 1000;
   const CATEGORIES = {
     astronomy: { label: "Астрономия", modules: [
       ["moon", "Луна"], ["sun", "Солнце"], ["eclipses", "Затмения"], ["meteors", "Метеоры"],
@@ -220,12 +222,45 @@
       if (signal) signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); }, { once: true });
     });
   }
+  function readApiCache(url) {
+    if (!url.includes("/api/calendar/month?") && !url.includes("/api/calendar/day?")) return null;
+    try {
+      const raw = sessionStorage.getItem(API_CACHE_PREFIX + url);
+      if (!raw) return null;
+      const entry = JSON.parse(raw);
+      if (!entry || !Number.isFinite(entry.expiresAt) || entry.expiresAt <= Date.now() || !("payload" in entry)) {
+        sessionStorage.removeItem(API_CACHE_PREFIX + url);
+        return null;
+      }
+      return { hit: true, payload: entry.payload };
+    } catch (_) {
+      return null;
+    }
+  }
+  function writeApiCache(url, payload) {
+    if (!url.includes("/api/calendar/month?") && !url.includes("/api/calendar/day?")) return;
+    try {
+      sessionStorage.setItem(API_CACHE_PREFIX + url, JSON.stringify({
+        expiresAt: Date.now() + API_CACHE_TTL_MS,
+        payload
+      }));
+    } catch (_) {
+      // Caching is optional; the calendar must work when sessionStorage is unavailable or full.
+    }
+  }
   async function fetchJson(url, signal) {
+    if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
+    const cached = readApiCache(url);
+    if (cached && cached.hit) return cached.payload;
     for (let attempt = 0; ; attempt++) {
       let response;
       try { response = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, signal, cache: "no-store" }); }
       catch (error) { throw error; }
-      if (response.ok) return response.json();
+      if (response.ok) {
+        const payload = await response.json();
+        writeApiCache(url, payload);
+        return payload;
+      }
       if ((response.status === 429 || response.status === 503) && attempt < RETRY_LIMIT) {
         await wait(retryDelay(response, attempt), signal);
         continue;
