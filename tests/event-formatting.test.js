@@ -311,3 +311,15 @@ test("Calendar markers and date numbers shrink further at widths up to 500px", (
   assert.match(responsive, /calendar-day\.is-moon-phase::before \{ font-size: 34px; \}/);
   assert.match(responsive, /calendar-day\.is-moon-phase::after \{ width: 34px; height: 34px; \}/);
 });
+
+
+test("Calendar markers and date numbers shrink further at widths up to 380px", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  const start = css.indexOf("@media (max-width: 380px)");
+  assert.ok(start >= 0, "380px responsive rules are present");
+  const responsive = css.slice(start, css.indexOf("\n}", start) + 2);
+  assert.match(responsive, /\.calendar-day \{ font-size: 12px; \}/);
+  assert.match(responsive, /calendar-day\.has-regular-events::before \{ width: 26px; height: 26px; \}/);
+  assert.match(responsive, /calendar-day\.is-moon-phase::before \{ font-size: 30px; \}/);
+  assert.match(responsive, /calendar-day\.is-moon-phase::after \{ width: 30px; height: 30px; \}/);
+});
