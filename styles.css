@@ -147,6 +147,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 @media (max-width: 1090px) {
   .day-menu-button { width: 71px; height: 71px; }
 }
+@media (max-width: 940px) {
+  .day-menu-button { width: 66px; height: 66px; }
+}
 @media (max-width: 850px) {
   .app-shell { width: min(660px, calc(100% - 28px)); }
   .site-header { padding: 20px 2px; }
