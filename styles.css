@@ -187,6 +187,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 }
 
 /* Dark theme: activated from the day details menu and persisted per browser. */
+:root[data-theme="dark"] .brand-mark { filter: brightness(0) invert(1); }
 :root[data-theme="dark"] {
   color-scheme: dark;
   --ink: #e7ece8;

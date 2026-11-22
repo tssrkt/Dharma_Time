@@ -237,3 +237,9 @@ test("Language switcher enables RU/EN, persists locale, and rerenders the curren
   assert.ok(about.includes('settings.locale === "en"'));
   assert.ok(about.includes('document.documentElement.lang = locale'));
 });
+
+
+test("Lotus logo is white only in dark theme", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(css, /:root\[data-theme="dark"\] \.brand-mark\s*\{\s*filter:\s*brightness\(0\) invert\(1\);\s*\}/);
+});
