@@ -153,13 +153,15 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .day-panel { min-height: 0; padding: 22px 20px; }
   .calendar-panel { padding: 20px 18px 15px; }
   .settings-panel { padding: 16px 17px; }
-  .module-list.is-buddhism { grid-template-columns: minmax(0, 1fr); }
-  .astronomy-module-columns { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
-  .misc-module-columns { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
-  .hindu-module-columns { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
   .hindu-dependent-options { padding-left: 0; padding-top: 8px; }
   .calendar-grid { min-height: 0; }
   .calendar-day { aspect-ratio: 1 / .82; }
+}
+@media (max-width: 499px) {
+  .module-list.is-buddhism { grid-template-columns: minmax(0, 1fr); }
+  .astronomy-module-columns,
+  .misc-module-columns,
+  .hindu-module-columns { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
 }
 @media (max-width: 420px) {
   .app-shell { width: calc(100% - 18px); }
