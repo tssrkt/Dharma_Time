@@ -238,7 +238,7 @@
   function safeErrorMessage(error) {
     if (error && error.name === "AbortError") return "";
     if (error && error.status === 429) return "Сервис временно ограничил частоту запросов. Попробуйте немного позже.";
-    return "Не удалось загрузить календарь.\n\nПроверьте подключение и попробуйте позже.";
+    return "Не удалось загрузить календарь.\nПроверьте подключение и попробуйте позже.";
   }
   function normalizeEvents(payload) {
     if (Array.isArray(payload)) return payload;
