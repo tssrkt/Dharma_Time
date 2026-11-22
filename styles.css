@@ -180,8 +180,6 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .app-shell { width: calc(100% - 18px); }
   .site-header { flex-wrap: wrap; }
   .city-picker { flex: 1 1 100%; }
-  .brand { font-size: 22px; }
-  .brand-mark { width: 34px; height: 34px; }
   .city-picker { flex-wrap: wrap; justify-content: flex-end; }
   .calendar-panel { padding: 17px 11px 13px; border-radius: 16px; }
   .month-toolbar { grid-template-columns: 36px 1fr 36px; gap: 7px; margin-bottom: 19px; }

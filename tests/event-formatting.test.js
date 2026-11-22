@@ -335,3 +335,13 @@ test("At widths up to 450px, brand is centered above the centered city picker", 
   assert.match(responsive, /\.city-picker \{ margin-left: 0; justify-content: center; flex-wrap: nowrap; \}/);
   assert.match(responsive, /#city-search \{ text-align: left; \}/);
 });
+
+
+test("Brand text and logo keep their desktop sizes at every responsive width", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(css, /\.brand \{[^}]*font-size: 25px;/);
+  assert.match(css, /\.brand-mark \{[^}]*width: 38px; height: 38px;/);
+  const mobile = css.match(/@media \(max-width: 420px\) \{([\s\S]*?)\n\}/);
+  assert.ok(mobile, "420px responsive rules are present");
+  assert.doesNotMatch(mobile[1], /\.brand(?:-mark)?\s*\{[^}]*?(?:font-size|width|height)\s*:/);
+});
