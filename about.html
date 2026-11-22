@@ -11,12 +11,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="about.js" defer></script>
 </head>
 <body>
   <main class="app-shell">
     <header class="site-header">
-      <a class="brand" href="./" aria-label="Dharma Time — на главную"><img class="brand-mark" src="assets/lotus.svg" alt="" aria-hidden="true"><span>Dharma Time</span></a>
-      <p class="header-note">Календарь традиций и природных циклов</p>
+      <a class="brand" href="./" aria-label="Dharma Time — на главную"><img class="brand-mark" src="img/lotus.png" alt="" aria-hidden="true"><span>Dharma Time</span></a>
+      <div class="city-picker"><label for="city-search">Ваш город:</label><div class="city-search-wrap"><input id="city-search" type="text" value="Москва" autocomplete="off" aria-autocomplete="list" aria-controls="city-results" aria-expanded="false"><ul id="city-results" class="city-results" role="listbox" hidden></ul></div></div>
     </header>
     <section class="about-panel panel" aria-labelledby="about-title">
       <h1 id="about-title">About</h1>
