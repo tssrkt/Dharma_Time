@@ -43,6 +43,17 @@
         </section>
       </section>
       <section class="day-panel panel" aria-label="События выбранного дня">
+        <div class="day-menu-wrap">
+          <button class="day-menu-button" id="day-menu-button" type="button" aria-label="Открыть меню" aria-haspopup="true" aria-expanded="false" aria-controls="day-menu">
+            <span></span><span></span><span></span>
+          </button>
+          <nav class="day-menu" id="day-menu" aria-label="Главное меню" hidden>
+            <button class="day-menu-item" type="button" disabled title="Будет доступно позже">ENGLISH</button>
+            <button class="day-menu-item" type="button" disabled title="Будет доступно позже">DARK THEME</button>
+            <a class="day-menu-item" href="https://t.me/dharma_time_bot" target="_blank" rel="noopener noreferrer">TELEGRAM-BOT</a>
+            <a class="day-menu-item" href="about.html">ABOUT</a>
+          </nav>
+        </div>
         <div class="day-heading"><p class="eyebrow" id="day-weekday"></p><h2 id="day-title">Выберите дату</h2></div>
         <div class="category-tabs event-tabs" id="event-categories" aria-label="Категории событий">
           <button class="image-tab is-active" type="button" data-category="astronomy" aria-label="Астрономические события" aria-pressed="true" disabled><img src="img/01.png" alt=""></button>

@@ -1181,6 +1181,28 @@
     input.addEventListener("keydown", event => { if (event.key === "Escape") closeResults(); });
     document.addEventListener("click", event => { if (!event.target.closest(".city-picker")) closeResults(); });
   }
+  function setupDayMenu() {
+    const button = $("#day-menu-button");
+    const menu = $("#day-menu");
+    if (!button || !menu) return;
+    const setOpen = open => {
+      menu.hidden = !open;
+      button.setAttribute("aria-expanded", String(open));
+    };
+    button.addEventListener("click", () => setOpen(menu.hidden));
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".day-menu-wrap")) setOpen(false);
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !menu.hidden) {
+        setOpen(false);
+        button.focus();
+      }
+    });
+    menu.addEventListener("click", event => {
+      if (event.target.closest("a")) setOpen(false);
+    });
+  }
   function wireEvents() {
     let resizeTimer;
     window.addEventListener("resize", () => {
@@ -1212,6 +1234,7 @@
     renderDayHeading();
     renderDayEvents();
     wireEvents();
+    setupDayMenu();
     setupCityPicker();
     saveSettings();
     if (getSelectedModules().length) {
