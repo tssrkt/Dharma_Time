@@ -323,3 +323,15 @@ test("Calendar markers and date numbers shrink further at widths up to 380px", (
   assert.match(responsive, /calendar-day\.is-moon-phase::before \{ font-size: 30px; \}/);
   assert.match(responsive, /calendar-day\.is-moon-phase::after \{ width: 30px; height: 30px; \}/);
 });
+
+
+test("At widths up to 450px, brand is centered above the centered city picker", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  const start = css.indexOf("@media (max-width: 450px)");
+  assert.ok(start >= 0, "450px responsive rules are present");
+  const responsive = css.slice(start, css.indexOf("\n}", start) + 2);
+  assert.match(responsive, /\.site-header \{ flex-direction: column; align-items: center; \}/);
+  assert.match(responsive, /\.brand \{ justify-content: center; \}/);
+  assert.match(responsive, /\.city-picker \{ margin-left: 0; justify-content: center; flex-wrap: nowrap; \}/);
+  assert.match(responsive, /#city-search \{ text-align: left; \}/);
+});
