@@ -76,6 +76,12 @@ test("Calendar name days use a plain-text Именины label and all tooltip t
   assert.doesNotMatch(css, /calendar-day\.has-events:not\(\.has-name-days\)::before/);
 });
 
+test("All day-detail card headings, including Panchanga and Phugpa, are rendered uppercase", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(css, /\.event-title\s*\{[^}]*text-transform:\s*uppercase/s);
+  assert.match(source, /title\.className = "event-title"/);
+});
+
 test("All event titles, including Ekadashi, use uppercase formatting", () => {
   assert.match(source, /eventTitle\.toLocaleUpperCase\(locale\)/);
   assert.doesNotMatch(source, /preserveTitleCase/);
