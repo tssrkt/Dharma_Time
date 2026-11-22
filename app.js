@@ -289,20 +289,11 @@
     return String(event.description || event.short_description || "").trim();
   }
   function formatDescription(value, module) {
-    const text = String(value || "").replace(/\r\n?/g, "\n").trim();
-    if (!text) return text;
-    if (module === "tibet") {
-      return text.replace(/[\t ]*\n+[\t ]*(?=Празднуется)/giu, " ");
-    }
-    if (/\n/.test(text) || text.length < 220) return text;
-
-    const sentences = text.split(/(?<=[.!?]) +/u);
-    if (sentences.length < 4) return text;
-    const paragraphs = [];
-    for (let i = 0; i < sentences.length; i += 2) {
-      paragraphs.push(sentences.slice(i, i + 2).join(" "));
-    }
-    return paragraphs.join("\n\n");
+    return String(value || "")
+      .replace(/\r\n?/g, "\n")
+      .replace(/[\t ]*\n+[\t ]*/g, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
   }
   function iconForCategory(category) { return ({ astronomy: "☾", buddhism: "☸", hindu: "ॐ", misc: "✿" })[category] || "✿"; }
   function renderCalendar() {

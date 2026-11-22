@@ -81,6 +81,19 @@ test("All event titles, including Ekadashi, use uppercase formatting", () => {
   assert.doesNotMatch(source, /preserveTitleCase/);
 });
 
+test("Event descriptions stay in one paragraph across modules and preserve sentence spacing", () => {
+  const start = source.indexOf("  function formatDescription(value, module) {");
+  const end = source.indexOf("  function iconForCategory(", start);
+  assert.ok(start >= 0 && end > start, "formatDescription function is present");
+  const getFormatter = new Function(`${source.slice(start, end)}; return formatDescription;`);
+  const formatDescription = getFormatter();
+  const description = "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.";
+  for (const module of ["sun", "moon", "north_india", "christian_catholic", "tibet"]) {
+    assert.equal(formatDescription(description, module), "First sentence. Second sentence. Third sentence. Fourth sentence.", module);
+  }
+  assert.equal(formatDescription("  One line.\r\n  Another line.  ", "sun"), "One line. Another line.");
+});
+
 test("City-only supplementary text follows description without a blank paragraph", () => {
   const separatorStart = source.indexOf("  function eventDescriptionSeparator(supplementaryText, locale) {");
   const separatorEnd = source.indexOf("  function renderDayEvents() {", separatorStart);
