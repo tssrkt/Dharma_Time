@@ -114,3 +114,20 @@ test("City-only supplementary text follows description without a blank paragraph
   assert.equal(separator("Other information", "ru"), "\n\n");
   assert.ok(source.includes("join(eventDescriptionSeparator(supplementaryText, locale))"));
 });
+
+test("Selecting a calendar module preserves existing events until the new response arrives", () => {
+  const selectionStart = source.indexOf("  function moduleSelectionChanged() {");
+  const selectionEnd = source.indexOf("  function makeModuleOption(", selectionStart);
+  assert.ok(selectionStart >= 0 && selectionEnd > selectionStart, "moduleSelectionChanged function is present");
+  const selection = source.slice(selectionStart, selectionEnd);
+  assert.ok(selection.indexOf("if (!getSelectedModules().length)") < selection.indexOf("state.monthEvents = []"), "month events clear only when all modules are disabled");
+  assert.doesNotMatch(selection.slice(0, selection.indexOf("if (!getSelectedModules().length)")), /state\.(?:monthEvents|dayEvents)\s*=\s*\[\]/);
+  const monthStart = source.indexOf("  async function loadMonthEvents() {");
+  const dayStart = source.indexOf("  async function loadDayEvents() {");
+  const monthLoader = source.slice(monthStart, dayStart);
+  const dayLoader = source.slice(dayStart, source.indexOf("  function changeMonth(", dayStart));
+  assert.match(monthLoader, /catch \(error\) \{\s*if \(requestId !== state\.monthRequestId \|\| error\.name === "AbortError"\) return;\s*calendarStatus\.textContent/);
+  assert.match(dayLoader, /catch \(error\) \{\s*if \(requestId !== state\.dayRequestId \|\| error\.name === "AbortError"\) return;\s*dayStatus\.textContent/);
+  assert.doesNotMatch(monthLoader, /catch \(error\) \{[^}]*state\.monthEvents\s*=\s*\[\]/s);
+  assert.doesNotMatch(dayLoader, /catch \(error\) \{[^}]*state\.dayEvents\s*=\s*\[\]/s);
+});

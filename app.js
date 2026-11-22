@@ -700,9 +700,9 @@
   function moduleSelectionChanged() {
     saveSettings();
     renderModuleList();
-    state.monthEvents = [];
-    renderCalendar();
     if (!getSelectedModules().length) {
+      state.monthEvents = [];
+      renderCalendar();
       state.monthRequestId++;
       state.dayRequestId++;
       if (state.monthController) state.monthController.abort();
@@ -1014,7 +1014,6 @@
       if (!state.dayEvents.length) renderDayEvents();
     } catch (error) {
       if (requestId !== state.monthRequestId || error.name === "AbortError") return;
-      state.monthEvents = [];
       calendarStatus.textContent = safeErrorMessage(error);
       renderCalendar();
     }
@@ -1055,10 +1054,6 @@
       renderDayEvents();
     } catch (error) {
       if (requestId !== state.dayRequestId || error.name === "AbortError") return;
-      state.dayEvents = [];
-      state.moonInfo = null;
-      state.phugpaInfo = null;
-      state.panchangaInfo = null;
       dayStatus.textContent = safeErrorMessage(error);
       renderDayEvents();
     }
