@@ -198,6 +198,25 @@ test("Calendar cache returns valid entries, separates request URLs, expires entr
 });
 
 
+test("Language switch waits for in-flight calendar requests before reloading in the new locale", () => {
+  assert.match(source, /apiRequestsInFlight: 0/);
+  assert.match(source, /apiIdleWaiters: \[\]/);
+  assert.match(source, /function waitForApiIdle\(\)/);
+  assert.match(source, /function reloadLocaleEvents\(requestedLocale\)/);
+  assert.match(source, /loadMonthEvents\(\)\.finally\(\(\) => \{/);
+  assert.match(source, /if \(locale === requestedLocale && getSelectedModules\(\)\.length\) loadDayEvents\(\)/);
+  assert.match(source, /state\.apiRequestsInFlight\+\+/);
+  assert.match(source, /state\.apiRequestsInFlight--/);
+  assert.match(source, /const previousRequestsPending = state\.apiRequestsInFlight > 0/);
+  assert.match(source, /waitForApiIdle\(\)\.then\(\(\) => \{/);
+  const start = source.indexOf("  function setLocale(nextLocale) {");
+  const end = source.indexOf("  function applyStaticTranslations()", start);
+  const setter = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(setter, /Do not abort an in-progress locale request/);
+  assert.doesNotMatch(setter, /monthController\.abort\(\)|dayController\.abort\(\)/);
+});
+
 test("Language switcher enables RU/EN, persists locale, and rerenders the current page", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.ok(html.includes('id="language-toggle"'));

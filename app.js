@@ -72,6 +72,8 @@
     dayRequestId: 0,
     monthController: null,
     dayController: null,
+    apiRequestsInFlight: 0,
+    apiIdleWaiters: [],
     expandedEvents: new Set(),
     nameDaysOpen: false,
     chaturthiOpen: false,
@@ -143,6 +145,13 @@
   };
   function tr(text) { return locale === "en" ? (UI_EN[text] || text) : text; }
   function defaultCityDisplayName() { return locale === "en" ? "Moscow (Russia)" : "Москва (Россия)"; }
+  function reloadLocaleEvents(requestedLocale) {
+    // Month and day routes calculate the same month in the backend. Sequence
+    // them so separate server workers cannot start duplicate calculations.
+    loadMonthEvents().finally(() => {
+      if (locale === requestedLocale && getSelectedModules().length) loadDayEvents();
+    });
+  }
   function setLocale(nextLocale) {
     const next = nextLocale === "en" ? "en" : "ru";
     if (next === locale) return;
@@ -154,8 +163,24 @@
     renderCalendar();
     renderDayHeading();
     renderDayEvents();
-    if (getSelectedModules().length) { loadMonthEvents(); loadDayEvents(); }
-    else { calendarStatus.textContent = ""; dayStatus.textContent = ""; }
+    if (getSelectedModules().length) {
+      // Do not abort an in-progress locale request: the server-side calculation
+      // may continue after browser cancellation and occupy a scarce compute slot.
+      const previousRequestsPending = state.apiRequestsInFlight > 0;
+      if (previousRequestsPending) {
+        state.monthRequestId++;
+        state.dayRequestId++;
+        calendarStatus.textContent = tr("Загружаем события…");
+        dayStatus.textContent = tr("Загружаем события…");
+        const requestedLocale = locale;
+        waitForApiIdle().then(() => {
+          if (locale !== requestedLocale) return;
+          reloadLocaleEvents(requestedLocale);
+        });
+      } else {
+        reloadLocaleEvents(locale);
+      }
+    } else { calendarStatus.textContent = ""; dayStatus.textContent = ""; }
     const input = $("#city-search");
     if (input) {
       input.value = state.settings.cityDisplayName || (state.settings.cityName === DEFAULTS.cityName ? defaultCityDisplayName() : state.settings.cityName);
@@ -352,26 +377,39 @@
       // Caching is optional; the calendar must work when sessionStorage is unavailable or full.
     }
   }
+  function waitForApiIdle() {
+    if (state.apiRequestsInFlight === 0) return Promise.resolve();
+    return new Promise(resolve => state.apiIdleWaiters.push(resolve));
+  }
   async function fetchJson(url, signal) {
     if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
     const cached = readApiCache(url);
     if (cached && cached.hit) return cached.payload;
-    for (let attempt = 0; ; attempt++) {
-      let response;
-      try { response = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, signal, cache: "no-store" }); }
-      catch (error) { throw error; }
-      if (response.ok) {
-        const payload = await response.json();
-        writeApiCache(url, payload);
-        return payload;
+    state.apiRequestsInFlight++;
+    try {
+      for (let attempt = 0; ; attempt++) {
+        let response;
+        try { response = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, signal, cache: "no-store" }); }
+        catch (error) { throw error; }
+        if (response.ok) {
+          const payload = await response.json();
+          writeApiCache(url, payload);
+          return payload;
+        }
+        if ((response.status === 429 || response.status === 503) && attempt < RETRY_LIMIT) {
+          await wait(retryDelay(response, attempt), signal);
+          continue;
+        }
+        const error = new Error(response.status === 429 ? "rate_limit" : response.status === 503 ? "temporarily_unavailable" : "request_failed");
+        error.status = response.status;
+        throw error;
       }
-      if ((response.status === 429 || response.status === 503) && attempt < RETRY_LIMIT) {
-        await wait(retryDelay(response, attempt), signal);
-        continue;
+    } finally {
+      state.apiRequestsInFlight--;
+      if (state.apiRequestsInFlight === 0) {
+        const waiters = state.apiIdleWaiters.splice(0);
+        waiters.forEach(resolve => resolve());
       }
-      const error = new Error(response.status === 429 ? "rate_limit" : response.status === 503 ? "temporarily_unavailable" : "request_failed");
-      error.status = response.status;
-      throw error;
     }
   }
   function safeErrorMessage(error) {
