@@ -293,3 +293,10 @@ test("Calendar event and moon markers use the approved smaller sizes at widths u
   assert.match(responsive, /calendar-day\.is-moon-phase::after \{ width: 38px; height: 38px; \}/);
   assert.ok(start > css.indexOf("@media (max-width: 420px)"), "550px rules override the older mobile sizes");
 });
+
+
+test("Moon phase emoji stays centered independently of its responsive font size", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(css, /\.calendar-day\.is-moon-phase::before \{[^}]*left: 50%;[^}]*display: flex; align-items: center; justify-content: center; width: 1\.2em; height: 1\.2em/);
+  assert.match(css, /\.calendar-day\.is-moon-phase::before \{[^}]*transform: translate\(-50%, -50%\)/);
+});
