@@ -263,6 +263,12 @@ test("Language switcher enables RU/EN, persists locale, and rerenders the curren
 });
 
 
+test("About page body text matches the 17px event description font size", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(css, /\.event-summary, \.event-description\s*\{[^}]*font-size:\s*17px/);
+  assert.match(css, /\.about-panel\s*\{[^}]*font-size:\s*17px/);
+});
+
 test("Lotus logo is white only in dark theme", () => {
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
   assert.match(css, /:root\[data-theme="dark"\] \.brand-mark\s*\{\s*filter:\s*brightness\(0\) invert\(1\);\s*\}/);
