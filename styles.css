@@ -185,3 +185,57 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .day-panel { padding: 19px 14px; border-radius: 16px; }
   .event-card { padding: 13px; }
 }
+
+/* Dark theme: activated from the day details menu and persisted per browser. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e7ece8;
+  --muted: #a4b0a8;
+  --paper: #171c19;
+  --panel: #222a25;
+  --line: #3a463e;
+  --green: #8dbda0;
+  --green-dark: #b5dcc3;
+  --gold: #d4ad65;
+  --soft-green: #304338;
+  --shadow: 0 14px 36px rgba(0, 0, 0, .22);
+}
+:root[data-theme="dark"] body { background: var(--paper); color: var(--ink); }
+:root[data-theme="dark"] .panel { border-color: #354139; }
+:root[data-theme="dark"] #city-search { background: var(--paper); color: var(--ink); }
+:root[data-theme="dark"] .city-results,
+:root[data-theme="dark"] .day-menu,
+:root[data-theme="dark"] .event-tooltip { background: var(--panel); border-color: var(--line); color: var(--ink); }
+:root[data-theme="dark"] .icon-button { background: var(--panel); color: var(--green-dark); }
+:root[data-theme="dark"] .icon-button:hover,
+:root[data-theme="dark"] .calendar-day:hover { background: #2a352e; border-color: var(--line); }
+:root[data-theme="dark"] .calendar-day.is-outside { color: #68766d; }
+:root[data-theme="dark"] .calendar-day .day-number { text-shadow: -1px 0 #222a25, 1px 0 #222a25, 0 -1px #222a25, 0 1px #222a25, 0 0 4px #222a25; }
+:root[data-theme="dark"] .calendar-day.is-selected { background: var(--soft-green); color: var(--green-dark); }
+:root[data-theme="dark"] .weekday-row { color: #9ca99f; }
+:root[data-theme="dark"] .image-tab { background: #29322c; }
+:root[data-theme="dark"] .image-tab.is-active { background: var(--soft-green); border-color: #4b6a56; }
+:root[data-theme="dark"] .module-group,
+:root[data-theme="dark"] .settings-footer { border-color: #354139; }
+:root[data-theme="dark"] .module-group summary,
+:root[data-theme="dark"] .module-folder > summary,
+:root[data-theme="dark"] .module-folder[open] > summary { color: #b8c9bd; }
+:root[data-theme="dark"] .module-option:hover { background: #2a352e; }
+:root[data-theme="dark"] .module-children { border-color: #46554a; }
+:root[data-theme="dark"] .name-days-card .name-day-line,
+:root[data-theme="dark"] .event-summary,
+:root[data-theme="dark"] .event-description { color: #c0cbc3; }
+:root[data-theme="dark"] .event-card { background: #252e28; border-color: #3a463e; }
+:root[data-theme="dark"] .event-date { color: #a1ada4; }
+:root[data-theme="dark"] .day-menu-button { color: var(--green-dark); }
+:root[data-theme="dark"] .day-menu-button:hover,
+:root[data-theme="dark"] .day-menu-button[aria-expanded="true"],
+:root[data-theme="dark"] .day-menu-item:not(:disabled):hover,
+:root[data-theme="dark"] .day-menu-item:not(:disabled):focus-visible { background: var(--soft-green); color: var(--green-dark); }
+:root[data-theme="dark"] .day-menu-item:disabled { color: var(--muted); }
+:root[data-theme="dark"] .event-toggle,
+:root[data-theme="dark"] .text-button { color: var(--green); }
+:root[data-theme="dark"] .event-toggle:hover,
+:root[data-theme="dark"] .text-button:hover { color: var(--green-dark); }
+:root[data-theme="dark"] .site-footer { color: #87958b; }
+:root[data-theme="dark"] .site-footer a:hover { color: var(--green-dark); }

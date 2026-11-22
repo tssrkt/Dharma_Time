@@ -132,3 +132,18 @@ test("Selecting a calendar module preserves existing events until the new respon
   assert.doesNotMatch(monthLoader, /catch \(error\) \{[^}]*state\.monthEvents\s*=\s*\[\]/s);
   assert.doesNotMatch(dayLoader, /catch \(error\) \{[^}]*state\.dayEvents\s*=\s*\[\]/s);
 });
+
+test("Dark theme is available from the day menu and persisted locally", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.match(html, /id="theme-toggle"[^>]*aria-pressed="false">DARK THEME/);
+  assert.doesNotMatch(html, /id="theme-toggle"[^>]*disabled/);
+  assert.match(source, /function setupThemeToggle\(\)/);
+  assert.match(source, /localStorage\.getItem\("dharma-time-theme-v1"\)/);
+  assert.match(source, /localStorage\.setItem\("dharma-time-theme-v1", nextTheme\)/);
+  assert.match(source, /document\.documentElement\.dataset\.theme = isDark \? "dark" : "light"/);
+  assert.match(source, /button\.textContent = isDark \? "LIGHT THEME" : "DARK THEME"/);
+  assert.match(css, /:root\[data-theme="dark"\]\s*\{[^}]*color-scheme: dark;/s);
+  assert.match(css, /:root\[data-theme="dark"\] \.event-card/);
+  assert.match(css, /:root\[data-theme="dark"\] \.day-menu/);
+});

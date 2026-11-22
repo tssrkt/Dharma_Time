@@ -1181,6 +1181,26 @@
     input.addEventListener("keydown", event => { if (event.key === "Escape") closeResults(); });
     document.addEventListener("click", event => { if (!event.target.closest(".city-picker")) closeResults(); });
   }
+  function setupThemeToggle() {
+    const button = $("#theme-toggle");
+    if (!button) return;
+    const applyTheme = theme => {
+      const isDark = theme === "dark";
+      document.documentElement.dataset.theme = isDark ? "dark" : "light";
+      button.setAttribute("aria-pressed", String(isDark));
+      button.textContent = isDark ? "LIGHT THEME" : "DARK THEME";
+      const themeColor = document.querySelector('meta[name="theme-color"]');
+      if (themeColor) themeColor.setAttribute("content", isDark ? "#171c19" : "#f6f2e9");
+    };
+    let savedTheme = "light";
+    try { savedTheme = localStorage.getItem("dharma-time-theme-v1") === "dark" ? "dark" : "light"; } catch (_) { /* Storage may be unavailable. */ }
+    applyTheme(savedTheme);
+    button.addEventListener("click", () => {
+      const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+      try { localStorage.setItem("dharma-time-theme-v1", nextTheme); } catch (_) { /* Theme still works for this page view. */ }
+    });
+  }
   function setupDayMenu() {
     const button = $("#day-menu-button");
     const menu = $("#day-menu");
@@ -1234,6 +1254,7 @@
     renderDayHeading();
     renderDayEvents();
     wireEvents();
+    setupThemeToggle();
     setupDayMenu();
     setupCityPicker();
     saveSettings();
