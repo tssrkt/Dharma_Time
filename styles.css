@@ -201,6 +201,12 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .calendar-day.is-moon-phase::before { font-size: 38px; }
   .calendar-day.is-moon-phase::after { width: 38px; height: 38px; }
 }
+@media (max-width: 500px) {
+  .calendar-day { font-size: 13px; }
+  .calendar-day.has-regular-events::before { width: 30px; height: 30px; }
+  .calendar-day.is-moon-phase::before { font-size: 34px; }
+  .calendar-day.is-moon-phase::after { width: 34px; height: 34px; }
+}
 
 /* Dark theme: activated from the day details menu and persisted per browser. */
 :root[data-theme="dark"] .brand-mark { filter: brightness(0) invert(1); }

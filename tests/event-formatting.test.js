@@ -300,3 +300,14 @@ test("Moon phase emoji stays centered independently of its responsive font size"
   assert.match(css, /\.calendar-day\.is-moon-phase::before \{[^}]*left: 50%;[^}]*display: flex; align-items: center; justify-content: center; width: 1\.2em; height: 1\.2em/);
   assert.match(css, /\.calendar-day\.is-moon-phase::before \{[^}]*transform: translate\(-50%, -50%\)/);
 });
+
+test("Calendar markers and date numbers shrink further at widths up to 500px", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  const start = css.indexOf("@media (max-width: 500px)");
+  assert.ok(start >= 0, "500px responsive rules are present");
+  const responsive = css.slice(start, css.indexOf("\n}", start) + 2);
+  assert.match(responsive, /\.calendar-day \{ font-size: 13px; \}/);
+  assert.match(responsive, /calendar-day\.has-regular-events::before \{ width: 30px; height: 30px; \}/);
+  assert.match(responsive, /calendar-day\.is-moon-phase::before \{ font-size: 34px; \}/);
+  assert.match(responsive, /calendar-day\.is-moon-phase::after \{ width: 34px; height: 34px; \}/);
+});
