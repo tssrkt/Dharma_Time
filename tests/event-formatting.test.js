@@ -281,3 +281,15 @@ test("About page applies the persisted theme and matching browser theme color", 
   assert.match(about, /document\.documentElement\.dataset\.theme = theme/);
   assert.match(about, /themeColor\.content = theme === "dark" \? "#171c19" : "#f6f2e9"/);
 });
+
+
+test("Calendar event and moon markers use the approved smaller sizes at widths up to 550px", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  const start = css.indexOf("@media (max-width: 550px)");
+  assert.ok(start >= 0, "550px responsive rules are present");
+  const responsive = css.slice(start, css.indexOf("\n}", start) + 2);
+  assert.match(responsive, /calendar-day\.has-regular-events::before \{ width: 34px; height: 34px; \}/);
+  assert.match(responsive, /calendar-day\.is-moon-phase::before \{ font-size: 38px; \}/);
+  assert.match(responsive, /calendar-day\.is-moon-phase::after \{ width: 38px; height: 38px; \}/);
+  assert.ok(start > css.indexOf("@media (max-width: 420px)"), "550px rules override the older mobile sizes");
+});
