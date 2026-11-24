@@ -64,6 +64,7 @@
     selectedModules: new Set(DEFAULTS.selectedModules),
     monthEvents: [],
     dayEvents: [],
+    daySupplementaryEvents: [],
     moonInfo: null,
     phugpaInfo: null,
     phugpaDaily: false,
@@ -428,10 +429,12 @@
     const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
     const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
     return events.filter(event => {
-      if (Array.isArray(event.display_dates) && event.display_dates.some(value => {
-        const date = parseDate(value);
-        return date && date >= monthStart && date <= monthEnd;
-      })) return true;
+      if (Array.isArray(event.display_dates)) {
+        return event.display_dates.some(value => {
+          const date = parseDate(value);
+          return date && date >= monthStart && date <= monthEnd;
+        });
+      }
       const start = parseDate(event.start_date || event.start);
       const end = parseDate(event.end_date || event.end) || start;
       return Boolean(start && end && start <= monthEnd && end >= monthStart);
@@ -439,10 +442,33 @@
   }
   function eventOccursOn(event, date) {
     const key = dateKey(date);
-    if (Array.isArray(event.display_dates) && event.display_dates.some(item => String(item).slice(0, 10) === key)) return true;
+    // display_dates is the calendar engine's authoritative assignment of an
+    // event to visible dates. Never fall back to the raw interval when this
+    // field exists, or the tooltip and day details can disagree.
+    if (Array.isArray(event.display_dates)) {
+      return event.display_dates.some(item => String(item).slice(0, 10) === key);
+    }
     const start = parseDate(event.start_date || event.start);
     const end = parseDate(event.end_date || event.end) || start;
     return Boolean(start && end && start <= date && end >= date);
+  }
+
+  function syncDayEventsFromMonth() {
+    const supplementaryById = new Map(
+      state.daySupplementaryEvents.map(event => [String(event.id || ""), event])
+    );
+    state.dayEvents = state.monthEvents
+      .filter(event => eventOccursOn(event, state.selectedDate))
+      .map(event => {
+        const supplementary = supplementaryById.get(String(event.id || ""));
+        const displayInfo = supplementary && supplementary.extra
+          && supplementary.extra.display_info_block;
+        if (typeof displayInfo !== "string" || !displayInfo.trim()) return event;
+        return {
+          ...event,
+          extra: { ...(event.extra || {}), display_info_block: displayInfo }
+        };
+      });
   }
   function categoryForEvent(event) {
     const module = String(event.module || "");
@@ -493,18 +519,24 @@
     ];
     state.monthEvents.forEach(event => {
       const tags = Array.isArray(event.tags) ? event.tags : [];
-      const phase = moonPhaseDefinitions.find(item => tags.includes("astronomy." + item.tag) || tags.includes(item.tag) || String(event.id || "").includes(item.tag));
-      if (phase && event.module === "moon") {
-        const phaseDates = Array.isArray(event.display_dates) && event.display_dates.length ? event.display_dates : [event.start_date || event.start];
+      const phaseDefinition = moonPhaseDefinitions.find(item => tags.includes("astronomy." + item.tag) || tags.includes(item.tag) || String(event.id || "").includes(item.tag));
+      const phase = phaseDefinition && event.module === "moon"
+        ? { ...phaseDefinition, label: String(event.title || phaseDefinition.label) }
+        : null;
+      if (phase) {
+        const phaseDates = Array.isArray(event.display_dates) ? event.display_dates : [event.start_date || event.start];
         phaseDates.forEach(value => {
           const date = parseDate(value);
           if (date && date.getFullYear() === year && date.getMonth() === month) moonPhasesByDate.set(dateKey(date), phase);
         });
       }
-      if (Array.isArray(event.display_dates)) event.display_dates.forEach(value => {
-        const date = parseDate(value);
-        if (date && date.getFullYear() === year && date.getMonth() === month) monthEventKeys.add(dateKey(date));
-      });
+      if (Array.isArray(event.display_dates)) {
+        event.display_dates.forEach(value => {
+          const date = parseDate(value);
+          if (date && date.getFullYear() === year && date.getMonth() === month) monthEventKeys.add(dateKey(date));
+        });
+        return;
+      }
       const start = parseDate(event.start_date || event.start);
       const end = parseDate(event.end_date || event.end) || start;
       if (!start || !end) return;
@@ -570,11 +602,16 @@
         button.setAttribute("aria-label", longDate(date));
       }
       button.addEventListener("click", () => {
+        const selectedMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        const monthChanged = selectedMonth.getFullYear() !== state.month.getFullYear()
+          || selectedMonth.getMonth() !== state.month.getMonth();
         state.selectedDate = date;
+        if (monthChanged) state.month = selectedMonth;
         selectedDayKey = dateKey(date);
         state.expandedEvents.clear();
         renderCalendar();
         renderDayHeading();
+        if (monthChanged) loadMonthEvents();
         loadDayEvents();
       });
       calendarGrid.append(button);
@@ -1183,9 +1220,10 @@
       const payload = await fetchJson(API_BASE + "/api/calendar/month?" + params.toString(), controller.signal);
       if (requestId !== state.monthRequestId) return;
       state.monthEvents = eventsForMonth(normalizeEvents(payload), state.month);
+      syncDayEventsFromMonth();
       calendarStatus.textContent = "";
       renderCalendar();
-      if (!state.dayEvents.length) renderDayEvents();
+      renderDayEvents();
     } catch (error) {
       if (requestId !== state.monthRequestId || error.name === "AbortError") return;
       calendarStatus.textContent = safeErrorMessage(error);
@@ -1198,6 +1236,7 @@
       state.moonInfo = null;
       state.phugpaInfo = null;
       state.panchangaInfo = null;
+      state.daySupplementaryEvents = [];
       state.dayEvents = [];
       dayStatus.textContent = "";
       renderDayEvents();
@@ -1218,7 +1257,11 @@
       state.moonInfo = state.selectedModules.has("moon") && payload && payload.moon_phase ? payload.moon_phase : null;
       state.phugpaInfo = state.selectedModules.has("tibet") && state.phugpaDaily && payload && payload.phugpa_daily ? payload.phugpa_daily : null;
       state.panchangaInfo = (state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && payload && payload.panchanga ? payload.panchanga : null;
-      state.dayEvents = normalizeEvents(payload).filter(event => eventOccursOn(event, state.selectedDate));
+      // The month response is the sole source of event identity, title and
+      // date assignment. The day response contributes only date-specific
+      // rendered supplementary text and non-event daily summaries.
+      state.daySupplementaryEvents = normalizeEvents(payload);
+      syncDayEventsFromMonth();
       const available = new Set(state.dayEvents.map(categoryForEvent));
       if (state.selectedModules.has("moon") && state.moonInfo) available.add("astronomy");
       if (state.selectedModules.has("tibet") && state.phugpaDaily && state.phugpaInfo) available.add("buddhism");
@@ -1247,6 +1290,7 @@
       loadDayEvents();
     } else {
       state.monthEvents = [];
+      state.daySupplementaryEvents = [];
       state.dayEvents = [];
       renderCalendar();
       renderDayEvents();

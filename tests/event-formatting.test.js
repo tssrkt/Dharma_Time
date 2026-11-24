@@ -345,3 +345,77 @@ test("Brand text and logo keep their desktop sizes at every responsive width", (
   assert.ok(mobile, "420px responsive rules are present");
   assert.doesNotMatch(mobile[1], /\.brand(?:-mark)?\s*\{[^}]*?(?:font-size|width|height)\s*:/);
 });
+
+
+test("Day details use the month response as the sole source of event identity and date assignment", () => {
+  const start = source.indexOf("  function eventOccursOn(event, date) {");
+  const end = source.indexOf("  function categoryForEvent(event) {", start);
+  assert.ok(start >= 0 && end > start, "canonical day-event helpers are present");
+  const helpers = new Function(
+    "state", "dateKey", "parseDate",
+    source.slice(start, end) + "; return { eventOccursOn, syncDayEventsFromMonth };"
+  );
+  const state = {
+    selectedDate: new Date("2026-11-21T12:00:00Z"),
+    monthEvents: [
+      { id: "canonical-1", title: "Canonical title", display_dates: ["2026-11-21"], extra: { source: "month" } },
+      { id: "canonical-2", title: "Other date", display_dates: ["2026-11-22"] },
+      { id: "canonical-3", title: "Must not fall back to range", start_date: "2026-11-21", end_date: "2026-11-21", display_dates: [] }
+    ],
+    daySupplementaryEvents: [
+      { id: "canonical-1", title: "Conflicting day title", display_dates: ["2026-11-21"], extra: { display_info_block: "Day-only supplementary text" } },
+      { id: "day-only", title: "Must not be added as an event", display_dates: ["2026-11-21"] }
+    ],
+    dayEvents: []
+  };
+  const { syncDayEventsFromMonth } = helpers(
+    state,
+    date => date.toISOString().slice(0, 10),
+    value => {
+      if (!value) return null;
+      const text = String(value).slice(0, 10);
+      return text.length === 10 ? new Date(text + "T00:00:00Z") : null;
+    }
+  );
+  syncDayEventsFromMonth();
+  assert.deepEqual(state.dayEvents.map(event => event.id), ["canonical-1"]);
+  assert.equal(state.dayEvents[0].title, "Canonical title");
+  assert.equal(state.dayEvents[0].extra.source, "month");
+  assert.equal(state.dayEvents[0].extra.display_info_block, "Day-only supplementary text");
+});
+
+test("Selecting a date in an adjacent calendar cell loads that date's month as the canonical event source", () => {
+  assert.match(source, /const selectedMonth = new Date\(date\.getFullYear\(\), date\.getMonth\(\), 1\)/);
+  assert.match(source, /if \(monthChanged\) loadMonthEvents\(\);\s*loadDayEvents\(\);/);
+});
+
+
+test("Month filtering honors display_dates even when the raw event interval overlaps the month", () => {
+  const start = source.indexOf("  function eventsForMonth(events, month) {");
+  const end = source.indexOf("  function eventOccursOn(event, date) {", start);
+  assert.ok(start >= 0 && end > start, "month event filter is present");
+  const getFilter = new Function(
+    "parseDate",
+    source.slice(start, end) + "; return eventsForMonth;"
+  );
+  const filter = getFilter(value => {
+    if (!value) return null;
+    const text = String(value).slice(0, 10);
+    return text.length === 10 ? new Date(text + "T00:00:00Z") : null;
+  });
+  const events = [
+    { id: "visible", display_dates: ["2026-11-21"], start_date: "2026-11-01", end_date: "2026-11-30" },
+    { id: "not-assigned", display_dates: [], start_date: "2026-11-21", end_date: "2026-11-21" },
+    { id: "legacy", start_date: "2026-11-21", end_date: "2026-11-21" }
+  ];
+  assert.deepEqual(
+    filter(events, new Date(2026, 10, 1)).map(event => event.id),
+    ["visible", "legacy"]
+  );
+});
+
+
+test("Moon phase tooltip labels come from the canonical event title and respect display_dates", () => {
+  assert.match(source, /label: String\(event\.title \|\| phaseDefinition\.label\)/);
+  assert.match(source, /const phaseDates = Array\.isArray\(event\.display_dates\) \? event\.display_dates : \[event\.start_date \|\| event\.start\]/);
+});
