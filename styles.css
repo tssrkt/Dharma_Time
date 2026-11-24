@@ -18,7 +18,8 @@ button { font: inherit; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #c49a4b; outline-offset: 3px; }
 .app-shell { width: min(1240px, calc(100% - 40px)); margin: 0 auto; }
 .site-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 26px 4px 24px; }
-.brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); font-size: 25px; font-weight: 600; letter-spacing: -.5px; }
+.brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--ink); font-size: 25px; font-weight: 600; letter-spacing: -.5px; opacity: .75; transition: opacity .2s ease; }
+.brand:hover, .brand:focus-visible { opacity: 1; }
 .brand-mark { display: block; width: 38px; height: 38px; object-fit: contain; flex: 0 0 auto; }
 .city-picker { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--muted); font-size: 16px; }
 .city-picker label { white-space: nowrap; }
