@@ -36,6 +36,26 @@
   const copyToast = document.querySelector("#copy-toast");
   let copyToastTimer;
 
+  function positionCopyToast(clientX, clientY) {
+    if (!copyToast || copyToast.hidden) return;
+    const gap = 14;
+    const edge = 8;
+    const rect = copyToast.getBoundingClientRect();
+    let left = clientX + gap;
+    let top = clientY + gap;
+    if (left + rect.width > window.innerWidth - edge) left = clientX - rect.width - gap;
+    if (top + rect.height > window.innerHeight - edge) top = clientY - rect.height - gap;
+    left = Math.max(edge, Math.min(left, window.innerWidth - rect.width - edge));
+    top = Math.max(edge, Math.min(top, window.innerHeight - rect.height - edge));
+    copyToast.style.left = left + "px";
+    copyToast.style.top = top + "px";
+  }
+
+  document.addEventListener("pointermove", event => {
+    if (!copyToast || copyToast.hidden) return;
+    positionCopyToast(event.clientX, event.clientY);
+  });
+
   async function copyText(value) {
     if (navigator.clipboard && window.isSecureContext) {
       try {
@@ -56,7 +76,7 @@
   }
 
   document.querySelectorAll(".copy-value").forEach(button => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", async event => {
       try {
         await copyText(button.dataset.copyValue || button.textContent.trim());
         if (!copyToast) return;
@@ -70,6 +90,7 @@
           : "Не удалось скопировать. Скопируйте значение вручную.";
       }
       copyToast.hidden = false;
+      positionCopyToast(event.clientX, event.clientY);
       clearTimeout(copyToastTimer);
       copyToastTimer = setTimeout(() => { copyToast.hidden = true; }, 2600);
     });

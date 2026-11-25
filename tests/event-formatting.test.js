@@ -296,7 +296,7 @@ test("Language switcher enables RU/EN, persists locale, and rerenders the curren
   assert.ok(source.includes('locale = stored.locale === "en" ? "en" : "ru"'));
   assert.ok(source.includes('state.settings.locale = locale'));
   assert.ok(source.includes('params.set("locale", state.settings.locale || locale)'));
-  assert.ok(source.includes('new URLSearchParams({ q: query, locale: state.settings.locale || locale })'));
+  assert.ok(source.includes('new URLSearchParams({ q: query, locale: requestLocale })'));
   assert.ok(source.includes('document.documentElement.lang = locale'));
   assert.ok(source.includes('function setLocale(nextLocale)'));
   assert.ok(source.includes('languageToggle.addEventListener("click", () => setLocale'));
@@ -310,10 +310,15 @@ test("Language switcher enables RU/EN, persists locale, and rerenders the curren
 });
 
 
-test("About page body text matches the 17px event description font size", () => {
+test("About page body text uses the approved 20px font size in both locales", () => {
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  const html = fs.readFileSync(path.join(__dirname, "..", "about.html"), "utf8");
   assert.match(css, /\.event-summary, \.event-description\s*\{[^}]*font-size:\s*17px/);
-  assert.match(css, /\.about-panel\s*\{[^}]*font-size:\s*17px/);
+  assert.match(css, /\.about-panel\s*\{[^}]*font-size:\s*20px/);
+  assert.equal((html.match(/class="about-content" data-locale="/g) || []).length, 2);
+  assert.match(css, /\.about-panel \.about-content\s*\{\s*text-align:\s*justify/);
+  assert.match(css, /\.about-panel h1\s*\{[^}]*font-size:\s*24px/);
+  assert.match(css, /\.about-panel \.about-content h2\s*\{[^}]*margin:\s*30px 0 10px;[^}]*font-size:\s*24px/);
 });
 
 
@@ -328,7 +333,20 @@ test("About page donation values copy on click and the support heading matches t
   assert.match(js, /Адрес скопирован\./);
   assert.match(js, /Номер ЮMoney скопирован\./);
   assert.match(css, /\.copy-value:hover[^}]*font-weight:\s*700/);
-  assert.match(css, /\.about-panel \.about-content h2\s*\{[^}]*font-size:\s*24px;[^}]*font-weight:\s*600/);
+  assert.match(css, /\.copy-toast\s*\{[^}]*position:\s*fixed;[^}]*pointer-events:\s*none/);
+  assert.match(js, /function positionCopyToast\(clientX, clientY\)/);
+  assert.match(js, /document\.addEventListener\("pointermove"/);
+  assert.match(js, /positionCopyToast\(event\.clientX, event\.clientY\)/);
+  assert.match(js, /navigator\.clipboard\.writeText\(value\)/);
+  assert.equal((html.match(/<p aria-hidden="true">&nbsp;<\/p>\s*<h2>(?:Поддержать Dharma Time|Support Dharma Time)<\/h2>/g) || []).length, 2);
+  for (const locale of ["ru", "en"]) {
+    const start = html.indexOf('data-locale="' + locale + '"');
+    const end = html.indexOf("</div>", start);
+    const section = html.slice(start, end);
+    assert.equal((section.match(/class="copy-value"/g) || []).length, 2, locale + " has both copy controls");
+    assert.equal((section.match(/data-copy-kind="address"/g) || []).length, 1, locale + " has address copy");
+    assert.equal((section.match(/data-copy-kind="number"/g) || []).length, 1, locale + " has ЮMoney copy");
+  }
 });
 
 test("Lotus logo is white only in dark theme", () => {
