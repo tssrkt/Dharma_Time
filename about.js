@@ -29,10 +29,9 @@
   if (description) description.content = locale === "en" ? "About Dharma Time" : "О календаре Dharma Time";
   const aboutTitle = document.querySelector("#about-title");
   if (aboutTitle) aboutTitle.textContent = locale === "en" ? "About" : "О проекте";
-  const placeholder = document.querySelector(".about-placeholder");
-  if (placeholder) placeholder.textContent = locale === "en"
-    ? "This page is under development. Text and links will be added later."
-    : "Страница в разработке. Текст и ссылки будут добавлены позже.";
+  document.querySelectorAll(".about-content").forEach(content => {
+    content.hidden = content.dataset.locale !== locale;
+  });
   const cityLabel = document.querySelector(".city-picker label");
   if (cityLabel) cityLabel.textContent = locale === "en" ? "Your city:" : "Ваш город:";
   const brand = document.querySelector(".brand");
