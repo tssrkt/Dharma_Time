@@ -141,9 +141,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .site-footer span { padding: 0 5px; color: var(--gold); }
 .site-footer a { color: inherit; font-size: 16px; text-decoration: none; }
 .site-footer a:hover { color: var(--green); text-decoration: underline; }
-.about-panel { padding: 28px 30px; min-height: 220px; font-size: 17px; line-height: 1.8; }
-.about-panel h1 { margin: 0 0 14px; font-size: 24px; font-weight: 600; }
-.about-panel .about-content h2 { margin: 24px 0 14px; font-size: 24px; font-weight: 600; }
+.about-panel { padding: 28px 30px; min-height: 220px; font-size: 20px; line-height: 1.8; }
+.about-panel .about-content { text-align: justify; }
+.about-panel h1 { margin: 0 0 10px; font-size: 24px; font-weight: 600; }
+.about-panel .about-content h2 { margin: 30px 0 10px; font-size: 24px; font-weight: 600; }
 .copy-value { display: inline; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
 .copy-value:hover, .copy-value:focus-visible { font-weight: 700; }
 .copy-toast { position: fixed; z-index: 1000; left: 50%; bottom: 20px; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 10px 18px; border-radius: 9px; background: var(--green-dark); color: #fff; box-shadow: var(--shadow); text-align: center; font-size: 15px; line-height: 1.5; }
