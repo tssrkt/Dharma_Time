@@ -14,21 +14,49 @@ permissions:
 jobs:
   health-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 4
     steps:
       - name: Wake API and verify health
         shell: bash
         run: |
-          set -u
+          set -euo pipefail
           url="https://dharma-time.enzonic.dev/api/health"
           for attempt in 1 2 3; do
             if curl --fail --silent --show-error --max-time 20 "$url"; then
               printf '\n'
-              exit 0
+              break
             fi
-            if [ "$attempt" -lt 3 ]; then
-              sleep 5
+            if [ "$attempt" -eq 3 ]; then
+              echo "Dharma Time API health check failed after 3 attempts." >&2
+              exit 1
             fi
+            sleep 5
           done
-          echo "Dharma Time API health check failed after 3 attempts." >&2
-          exit 1
+
+      - name: Verify real calendar computation
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://dharma-time.enzonic.dev"
+          year="$(date -u +%Y)"
+          month="$(date -u +%-m)"
+          day="$(date -u +%F)"
+
+          check_endpoint() {
+            local name="$1"
+            local url="$2"
+            for attempt in 1 2 3; do
+              if curl --fail --silent --show-error --max-time 20 "$url" >/dev/null; then
+                echo "$name: OK (attempt $attempt)"
+                return 0
+              fi
+              if [ "$attempt" -lt 3 ]; then
+                sleep 5
+              fi
+            done
+            echo "$name failed after 3 attempts: $url" >&2
+            return 1
+          }
+
+          check_endpoint "Calendar month" "$base/api/calendar/month?year=$year&month=$month&modules=moon,sun&locale=en"
+          check_endpoint "Calendar day" "$base/api/calendar/day?date=$day&modules=moon&locale=en"
