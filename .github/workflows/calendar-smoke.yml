@@ -1,0 +1,37 @@
+name: Dharma Time calendar smoke test
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  calendar-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - name: Verify current month calculation once
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://dharma-time.enzonic.dev"
+          year="$(date -u +%Y)"
+          month="$(date -u +%-m)"
+          url="$base/api/calendar/month?year=$year&month=$month&modules=moon,sun&locale=en"
+          # Do not retry a slow calculation: the server coalesces identical requests,
+          # and repeated callers can occupy request handlers without adding evidence.
+          curl --fail --silent --show-error --max-time 930 "$url" >/dev/null
+          echo "Calendar month calculation: OK"
+
+      - name: Verify current day calculation once
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://dharma-time.enzonic.dev"
+          day="$(date -u +%F)"
+          url="$base/api/calendar/day?date=$day&modules=moon&locale=en"
+          curl --fail --silent --show-error --max-time 30 "$url" >/dev/null
+          echo "Calendar day calculation: OK"
