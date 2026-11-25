@@ -3,10 +3,11 @@
 
   const API_BASE = "https://dharma-time.enzonic.dev";
   const STORAGE_KEY = "dharma-time-settings-v1";
-  const RETRY_LIMIT = 1;
-  const RETRY_DELAY_CAP_MS = 8000;
+  const RETRY_LIMIT = 2;
+  const RETRY_DELAY_CAP_MS = 15000;
   const API_CACHE_PREFIX = "dharma-time-api-cache-v1:";
   const API_CACHE_TTL_MS = 5 * 60 * 1000;
+  const API_CACHE_STALE_TTL_MS = 24 * 60 * 60 * 1000;
   const CATEGORIES = {
     astronomy: { label: "Астрономия", modules: [
       ["moon", "Луна"], ["sun", "Солнце"], ["eclipses", "Затмения"], ["meteors", "Метеоры"],
@@ -352,17 +353,23 @@
       if (signal) signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); }, { once: true });
     });
   }
-  function readApiCache(url) {
+  function readApiCache(url, allowStale = false) {
     if (!url.includes("/api/calendar/month?") && !url.includes("/api/calendar/day?")) return null;
     try {
       const raw = sessionStorage.getItem(API_CACHE_PREFIX + url);
       if (!raw) return null;
       const entry = JSON.parse(raw);
-      if (!entry || !Number.isFinite(entry.expiresAt) || entry.expiresAt <= Date.now() || !("payload" in entry)) {
+      const now = Date.now();
+      const staleUntil = Number.isFinite(entry && entry.staleUntil)
+        ? entry.staleUntil
+        : Number.isFinite(entry && entry.expiresAt) ? entry.expiresAt + API_CACHE_STALE_TTL_MS : 0;
+      if (!entry || !Number.isFinite(entry.expiresAt) || staleUntil <= now || !("payload" in entry)) {
         sessionStorage.removeItem(API_CACHE_PREFIX + url);
         return null;
       }
-      return { hit: true, payload: entry.payload };
+      const stale = entry.expiresAt <= now;
+      if (stale && !allowStale) return null;
+      return { hit: true, payload: entry.payload, stale };
     } catch (_) {
       return null;
     }
@@ -370,8 +377,10 @@
   function writeApiCache(url, payload) {
     if (!url.includes("/api/calendar/month?") && !url.includes("/api/calendar/day?")) return;
     try {
+      const now = Date.now();
       sessionStorage.setItem(API_CACHE_PREFIX + url, JSON.stringify({
-        expiresAt: Date.now() + API_CACHE_TTL_MS,
+        expiresAt: now + API_CACHE_TTL_MS,
+        staleUntil: now + API_CACHE_TTL_MS + API_CACHE_STALE_TTL_MS,
         payload
       }));
     } catch (_) {
@@ -386,23 +395,43 @@
     if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
     const cached = readApiCache(url);
     if (cached && cached.hit) return cached.payload;
+    const staleCache = readApiCache(url, true);
+    const calendarUrl = url.includes("/api/calendar/month?") || url.includes("/api/calendar/day?");
+    const useStaleCalendar = () => calendarUrl && staleCache && staleCache.stale
+      ? { ...staleCache.payload, __staleCache: true }
+      : null;
     state.apiRequestsInFlight++;
     try {
       for (let attempt = 0; ; attempt++) {
         let response;
-        try { response = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, signal, cache: "no-store" }); }
-        catch (error) { throw error; }
+        try {
+          response = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, signal, cache: "no-store" });
+        } catch (error) {
+          if (error && error.name === "AbortError" || signal && signal.aborted) throw error;
+          if (attempt < RETRY_LIMIT) {
+            await wait(retryDelay(null, attempt), signal);
+            continue;
+          }
+          const stalePayload = useStaleCalendar();
+          if (stalePayload) return stalePayload;
+          throw error;
+        }
         if (response.ok) {
           const payload = await response.json();
           writeApiCache(url, payload);
           return payload;
         }
-        if ((response.status === 429 || response.status === 503) && attempt < RETRY_LIMIT) {
+        if ([429, 502, 503, 504].includes(response.status) && attempt < RETRY_LIMIT) {
           await wait(retryDelay(response, attempt), signal);
           continue;
         }
-        const error = new Error(response.status === 429 ? "rate_limit" : response.status === 503 ? "temporarily_unavailable" : "request_failed");
+        const error = new Error(
+          response.status === 429 ? "rate_limit" :
+          [502, 503, 504].includes(response.status) ? "temporarily_unavailable" : "request_failed"
+        );
         error.status = response.status;
+        const stalePayload = useStaleCalendar();
+        if (stalePayload && [502, 503, 504].includes(response.status)) return stalePayload;
         throw error;
       }
     } finally {
@@ -1221,7 +1250,11 @@
       if (requestId !== state.monthRequestId) return;
       state.monthEvents = eventsForMonth(normalizeEvents(payload), state.month);
       syncDayEventsFromMonth();
-      calendarStatus.textContent = "";
+      calendarStatus.textContent = payload && payload.__staleCache
+        ? (locale === "en"
+          ? "Showing saved calendar data; the server is temporarily unavailable."
+          : "Показаны сохранённые данные календаря: сервер временно недоступен.")
+        : "";
       renderCalendar();
       renderDayEvents();
     } catch (error) {
@@ -1267,7 +1300,11 @@
       if (state.selectedModules.has("tibet") && state.phugpaDaily && state.phugpaInfo) available.add("buddhism");
       if ((state.selectedModules.has("north_india") || state.selectedModules.has("south_india")) && state.hinduOptions.panchanga && state.panchangaInfo) available.add("hindu");
       if (!available.has(state.activeEventCategory)) state.activeEventCategory = CATEGORY_ORDER.find(key => available.has(key)) || "astronomy";
-      dayStatus.textContent = "";
+      dayStatus.textContent = payload && payload.__staleCache
+        ? (locale === "en"
+          ? "Showing saved details; the server is temporarily unavailable."
+          : "Показаны сохранённые сведения: сервер временно недоступен.")
+        : "";
       renderDayEvents();
     } catch (error) {
       if (requestId !== state.dayRequestId || error.name === "AbortError") return;

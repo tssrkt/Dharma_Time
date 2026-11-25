@@ -1,0 +1,31 @@
+name: Enzonic API keepalive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Wake API and verify health
+        shell: bash
+        run: |
+          set -u
+          url="https://dharma-time.enzonic.dev/api/health"
+          for attempt in 1 2 3; do
+            if curl --fail --silent --show-error --max-time 20 "$url"; then
+              printf '\n'
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              sleep 5
+            fi
+          done
+          echo "Dharma Time API health check failed after 3 attempts." >&2
+          exit 1

@@ -154,22 +154,23 @@ test("Dark theme is available from the day menu and persisted locally", () => {
   assert.match(css, /:root\[data-theme="dark"\] \.day-menu/);
 });
 
-test("Calendar month/day API responses use a five-minute session cache keyed by full request URL", () => {
+test("Calendar month/day API responses use a five-minute session cache with a 24-hour stale fallback", () => {
   assert.match(source, /const API_CACHE_PREFIX = "dharma-time-api-cache-v1:"/);
   assert.match(source, /const API_CACHE_TTL_MS = 5 \* 60 \* 1000/);
-  assert.match(source, /function readApiCache\(url\)/);
+  assert.match(source, /const API_CACHE_STALE_TTL_MS = 24 \* 60 \* 60 \* 1000/);
+  assert.match(source, /function readApiCache\(url, allowStale = false\)/);
   assert.match(source, /function writeApiCache\(url, payload\)/);
   assert.match(source, /API_CACHE_PREFIX \+ url/);
-  assert.match(source, /entry\.expiresAt <= Date\.now\(\)/);
+  assert.match(source, /const stale = entry\.expiresAt <= now/);
   assert.match(source, /if \(cached && cached\.hit\) return cached\.payload/);
   assert.match(source, /if \(response\.ok\) \{\s*const payload = await response\.json\(\);\s*writeApiCache\(url, payload\);\s*return payload;/);
   assert.match(source, /url\.includes\("\/api\/calendar\/month\?"\).*url\.includes\("\/api\/calendar\/day\?"/s);
   assert.match(source, /catch \(_\) \{\s*\/\/ Caching is optional; the calendar must work when sessionStorage is unavailable or full\./);
 });
 
-test("Calendar cache returns valid entries, separates request URLs, expires entries, and tolerates storage errors", () => {
-  const start = source.indexOf("  function readApiCache(url) {");
-  const end = source.indexOf("  async function fetchJson(url, signal) {", start);
+test("Calendar cache separates request URLs, expires fresh entries, preserves stale entries for fallback, and tolerates storage errors", () => {
+  const start = source.indexOf("  function readApiCache(url, allowStale = false) {");
+  const end = source.indexOf("  function waitForApiIdle()", start);
   assert.ok(start >= 0 && end > start, "cache helpers are present");
   let now = 1000;
   const values = new Map();
@@ -178,17 +179,21 @@ test("Calendar cache returns valid entries, separates request URLs, expires entr
     setItem: (key, value) => values.set(key, value),
     removeItem: key => values.delete(key)
   };
-  const helpers = new Function("sessionStorage", "API_CACHE_PREFIX", "API_CACHE_TTL_MS", "Date",
+  const helpers = new Function("sessionStorage", "API_CACHE_PREFIX", "API_CACHE_TTL_MS", "API_CACHE_STALE_TTL_MS", "Date",
     source.slice(start, end) + "; return { readApiCache, writeApiCache };"
-  )(storage, "test-cache:", 300000, { now: () => now });
+  )(storage, "test-cache:", 300000, 86400000, { now: () => now });
   const monthUrl = "https://example.test/api/calendar/month?modules=moon&month=11";
   const otherMonthUrl = "https://example.test/api/calendar/month?modules=moon&month=12";
   const payload = { events: [{ id: "moon-1" }] };
   helpers.writeApiCache(monthUrl, payload);
-  assert.deepEqual(helpers.readApiCache(monthUrl), { hit: true, payload });
+  assert.deepEqual(helpers.readApiCache(monthUrl), { hit: true, payload, stale: false });
   assert.equal(helpers.readApiCache(otherMonthUrl), null);
   now += 300001;
   assert.equal(helpers.readApiCache(monthUrl), null);
+  assert.deepEqual(helpers.readApiCache(monthUrl, true), { hit: true, payload, stale: true });
+  assert.equal(values.size, 1);
+  now += 86400000;
+  assert.equal(helpers.readApiCache(monthUrl, true), null);
   assert.equal(values.size, 0);
 
   const brokenStorage = {
@@ -196,11 +201,43 @@ test("Calendar cache returns valid entries, separates request URLs, expires entr
     setItem() { throw new Error("storage unavailable"); },
     removeItem() { throw new Error("storage unavailable"); }
   };
-  const safeHelpers = new Function("sessionStorage", "API_CACHE_PREFIX", "API_CACHE_TTL_MS", "Date",
+  const safeHelpers = new Function("sessionStorage", "API_CACHE_PREFIX", "API_CACHE_TTL_MS", "API_CACHE_STALE_TTL_MS", "Date",
     source.slice(start, end) + "; return { readApiCache, writeApiCache };"
-  )(brokenStorage, "test-cache:", 300000, { now: () => now });
+  )(brokenStorage, "test-cache:", 300000, 86400000, { now: () => now });
   assert.equal(safeHelpers.readApiCache(monthUrl), null);
   assert.doesNotThrow(() => safeHelpers.writeApiCache(monthUrl, payload));
+});
+
+test("Calendar requests retry transient HTTP/network failures and use stale calendar data when API is unavailable", async () => {
+  const start = source.indexOf("  async function fetchJson(url, signal) {");
+  const end = source.indexOf("  function safeErrorMessage(error) {", start);
+  assert.ok(start >= 0 && end > start, "fetchJson is present");
+  const makeFetcher = (fetchImpl, readCache = () => null) => {
+    const state = { apiRequestsInFlight: 0, apiIdleWaiters: [] };
+    const fetchJson = new Function(
+      "state", "readApiCache", "writeApiCache", "RETRY_LIMIT", "RETRY_DELAY_CAP_MS",
+      "fetch", "wait", "retryDelay", "DOMException",
+      source.slice(start, end) + "; return fetchJson;"
+    )(state, readCache, () => {}, 2, 15000, fetchImpl, async () => {}, () => 0, DOMException);
+    return { fetchJson, state };
+  };
+  let calls = 0;
+  const retrying = makeFetcher(async () => {
+    calls++;
+    if (calls < 3) return { ok: false, status: 502, headers: { get: () => null } };
+    return { ok: true, json: async () => ({ events: [{ id: "recovered" }] }) };
+  });
+  assert.deepEqual(await retrying.fetchJson("https://example.test/api/calendar/month?year=2026"), { events: [{ id: "recovered" }] });
+  assert.equal(calls, 3);
+  assert.equal(retrying.state.apiRequestsInFlight, 0);
+
+  const cachedPayload = { events: [{ id: "stale" }] };
+  const unavailable = makeFetcher(async () => { throw new TypeError("network unavailable"); }, (url, allowStale) =>
+    allowStale ? { hit: true, payload: cachedPayload, stale: true } : null
+  );
+  const fallback = await unavailable.fetchJson("https://example.test/api/calendar/month?year=2026");
+  assert.deepEqual(fallback, { events: [{ id: "stale" }], __staleCache: true });
+  assert.equal(unavailable.state.apiRequestsInFlight, 0);
 });
 
 
