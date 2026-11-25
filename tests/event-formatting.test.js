@@ -238,6 +238,16 @@ test("Calendar requests retry transient HTTP/network failures and use stale cale
   const fallback = await unavailable.fetchJson("https://example.test/api/calendar/month?year=2026");
   assert.deepEqual(fallback, { events: [{ id: "stale" }], __staleCache: true });
   assert.equal(unavailable.state.apiRequestsInFlight, 0);
+
+  let serverFailures = 0;
+  const serverUnavailable = makeFetcher(async () => {
+    serverFailures++;
+    return { ok: false, status: 503, headers: { get: () => null } };
+  }, (url, allowStale) => allowStale ? { hit: true, payload: cachedPayload, stale: true } : null);
+  const serverFallback = await serverUnavailable.fetchJson("https://example.test/api/calendar/month?year=2026");
+  assert.deepEqual(serverFallback, { events: [{ id: "stale" }], __staleCache: true });
+  assert.equal(serverFailures, 3);
+  assert.equal(serverUnavailable.state.apiRequestsInFlight, 0);
 });
 
 

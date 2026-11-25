@@ -431,7 +431,7 @@
         );
         error.status = response.status;
         const stalePayload = useStaleCalendar();
-        if (stalePayload && [502, 503, 504].includes(response.status)) return stalePayload;
+        if (stalePayload && [429, 502, 503, 504].includes(response.status)) return stalePayload;
         throw error;
       }
     } finally {
