@@ -192,9 +192,24 @@
   }
   function applyStaticTranslations() {
     document.documentElement.lang = locale;
+    const seoTitle = locale === "en"
+      ? "Dharma Time — Astronomy and Spiritual Calendar"
+      : "Dharma Time — астрономический и духовный календарь";
+    const seoDescription = locale === "en"
+      ? "Explore astronomical events, lunar cycles, and dates from spiritual traditions in a calendar tailored to your selected city."
+      : "Dharma Time — календарь астрономических явлений, лунных циклов и дат духовных традиций. Изучайте календарные события с учётом выбранного города.";
     const description = $("meta[name='description']");
-    if (description) description.content = locale === "en" ? "Dharma Time calendar of Buddhist, Hindu and astronomical events" : "Календарь Dharma Time";
-    document.title = locale === "en" ? "Dharma Time — Calendar" : "Dharma Time — календарь";
+    if (description) description.content = seoDescription;
+    document.title = seoTitle;
+    const setSeoMeta = (selector, value) => {
+      const meta = $(selector);
+      if (meta) meta.setAttribute("content", value);
+    };
+    setSeoMeta('meta[property="og:title"]', seoTitle);
+    setSeoMeta('meta[property="og:description"]', seoDescription);
+    setSeoMeta('meta[name="twitter:title"]', seoTitle);
+    setSeoMeta('meta[name="twitter:description"]', seoDescription);
+    setSeoMeta('meta[property="og:locale"]', locale === "en" ? "en_US" : "ru_RU");
     const setText = (selector, value) => { const node = $(selector); if (node) node.textContent = value; };
     const setAttr = (selector, attr, value) => { const node = $(selector); if (node) node.setAttribute(attr, value); };
     setText(".city-picker label", locale === "en" ? "Your city:" : "Ваш город:");

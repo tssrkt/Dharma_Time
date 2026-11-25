@@ -24,9 +24,24 @@
 
   const locale = settings.locale === "en" ? "en" : "ru";
   document.documentElement.lang = locale;
-  document.title = locale === "en" ? "About · Dharma Time" : "О проекте · Dharma Time";
+  const seoTitle = locale === "en"
+    ? "About Dharma Time — Calendar and Traditions"
+    : "О проекте Dharma Time — описание календаря";
+  const seoDescription = locale === "en"
+    ? "Learn about Dharma Time, how dates from different spiritual traditions are presented, and the informational limits of the calendar."
+    : "О проекте Dharma Time: назначение календаря, принципы представления дат разных духовных традиций и ограничения информационных материалов.";
+  document.title = seoTitle;
   const description = document.querySelector('meta[name="description"]');
-  if (description) description.content = locale === "en" ? "About Dharma Time" : "О календаре Dharma Time";
+  if (description) description.content = seoDescription;
+  const setSeoMeta = (selector, value) => {
+    const meta = document.querySelector(selector);
+    if (meta) meta.setAttribute("content", value);
+  };
+  setSeoMeta('meta[property="og:title"]', seoTitle);
+  setSeoMeta('meta[property="og:description"]', seoDescription);
+  setSeoMeta('meta[name="twitter:title"]', seoTitle);
+  setSeoMeta('meta[name="twitter:description"]', seoDescription);
+  setSeoMeta('meta[property="og:locale"]', locale === "en" ? "en_US" : "ru_RU");
   const aboutTitle = document.querySelector("#about-title");
   if (aboutTitle) aboutTitle.textContent = locale === "en" ? "About" : "О проекте";
   document.querySelectorAll(".about-content").forEach(content => {
