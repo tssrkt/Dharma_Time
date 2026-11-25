@@ -32,6 +32,48 @@
   document.querySelectorAll(".about-content").forEach(content => {
     content.hidden = content.dataset.locale !== locale;
   });
+
+  const copyToast = document.querySelector("#copy-toast");
+  let copyToastTimer;
+
+  async function copyText(value) {
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return;
+      } catch (_) { /* Try the compatibility fallback below. */ }
+    }
+    const temporaryInput = document.createElement("textarea");
+    temporaryInput.value = value;
+    temporaryInput.setAttribute("readonly", "");
+    temporaryInput.style.position = "fixed";
+    temporaryInput.style.opacity = "0";
+    document.body.appendChild(temporaryInput);
+    temporaryInput.select();
+    const copied = document.execCommand("copy");
+    temporaryInput.remove();
+    if (!copied) throw new Error("Clipboard copy failed");
+  }
+
+  document.querySelectorAll(".copy-value").forEach(button => {
+    button.addEventListener("click", async () => {
+      try {
+        await copyText(button.dataset.copyValue || button.textContent.trim());
+        if (!copyToast) return;
+        copyToast.textContent = locale === "en"
+          ? (button.dataset.copyKind === "address" ? "Address copied." : "ЮMoney number copied.")
+          : (button.dataset.copyKind === "address" ? "Адрес скопирован." : "Номер ЮMoney скопирован.");
+      } catch (_) {
+        if (!copyToast) return;
+        copyToast.textContent = locale === "en"
+          ? "Copy failed. Please copy the value manually."
+          : "Не удалось скопировать. Скопируйте значение вручную.";
+      }
+      copyToast.hidden = false;
+      clearTimeout(copyToastTimer);
+      copyToastTimer = setTimeout(() => { copyToast.hidden = true; }, 2600);
+    });
+  });
   const cityLabel = document.querySelector(".city-picker label");
   if (cityLabel) cityLabel.textContent = locale === "en" ? "Your city:" : "Ваш город:";
   const brand = document.querySelector(".brand");

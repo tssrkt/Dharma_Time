@@ -316,6 +316,21 @@ test("About page body text matches the 17px event description font size", () => 
   assert.match(css, /\.about-panel\s*\{[^}]*font-size:\s*17px/);
 });
 
+
+test("About page donation values copy on click and the support heading matches the page heading style", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "about.html"), "utf8");
+  const js = fs.readFileSync(path.join(__dirname, "..", "about.js"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+  assert.equal((html.match(/data-copy-value="UQCu1fb6WFRd1KdHt3SCbS0BhOYHrveCYZU97EJWLXDUPPIh"/g) || []).length, 2);
+  assert.equal((html.match(/data-copy-value="4100116004998786"/g) || []).length, 2);
+  assert.match(html, /id="copy-toast"[^>]*aria-live="polite"/);
+  assert.match(js, /navigator\.clipboard\.writeText\(value\)/);
+  assert.match(js, /Адрес скопирован\./);
+  assert.match(js, /Номер ЮMoney скопирован\./);
+  assert.match(css, /\.copy-value:hover[^}]*font-weight:\s*700/);
+  assert.match(css, /\.about-panel \.about-content h2\s*\{[^}]*font-size:\s*24px;[^}]*font-weight:\s*600/);
+});
+
 test("Lotus logo is white only in dark theme", () => {
   const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
   assert.match(css, /:root\[data-theme="dark"\] \.brand-mark\s*\{\s*filter:\s*brightness\(0\) invert\(1\);\s*\}/);
