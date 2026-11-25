@@ -10,6 +10,17 @@ assert.ok(start >= 0 && end > start, "eventSupplementaryInfo function is present
 const getInfo = new Function("locale", `${source.slice(start, end)}; return eventSupplementaryInfo;`);
 const format = getInfo("ru");
 
+test("month and day calendar requests are sequenced after successful month loading", () => {
+  const start = source.indexOf("  function loadCalendarData() {");
+  const end = source.indexOf("  function setLocale(", start);
+  assert.ok(start >= 0 && end > start, "calendar load coordinator is present");
+  const coordinator = source.slice(start, end);
+  assert.match(coordinator, /loadMonthEvents\(\)/);
+  assert.match(coordinator, /monthLoaded && monthRequestId === state\.monthRequestId/);
+  assert.match(coordinator, /return loadDayEvents\(\)/);
+  assert.match(source, /if \(getSelectedModules\(\)\.length\) \{\s*loadCalendarData\(\);/);
+});
+
 test("Thai uposatha shows city but not Buddhist year or raw lunar fields", () => {
   const text = format({ module: "thailand", id: "thailand_thailand_uposatha_first_quarter_2026-11-21", extra: { display_city: "Бангкок (Таиланд)", be_year: 2569 }, lunar_info: { thai_month: "Kartika", thai_lunar_day: 8 } });
   assert.equal(text, "Город: Бангкок (Таиланд)");
@@ -133,7 +144,7 @@ test("Selecting a calendar module preserves existing events until the new respon
   const dayStart = source.indexOf("  async function loadDayEvents() {");
   const monthLoader = source.slice(monthStart, dayStart);
   const dayLoader = source.slice(dayStart, source.indexOf("  function changeMonth(", dayStart));
-  assert.match(monthLoader, /catch \(error\) \{\s*if \(requestId !== state\.monthRequestId \|\| error\.name === "AbortError"\) return;\s*calendarStatus\.textContent/);
+  assert.match(monthLoader, /catch \(error\) \{\s*if \(requestId !== state\.monthRequestId \|\| error\.name === "AbortError"\) return false;\s*calendarStatus\.textContent/);
   assert.match(dayLoader, /catch \(error\) \{\s*if \(requestId !== state\.dayRequestId \|\| error\.name === "AbortError"\) return;\s*dayStatus\.textContent/);
   assert.doesNotMatch(monthLoader, /catch \(error\) \{[^}]*state\.monthEvents\s*=\s*\[\]/s);
   assert.doesNotMatch(dayLoader, /catch \(error\) \{[^}]*state\.dayEvents\s*=\s*\[\]/s);
@@ -248,6 +259,21 @@ test("Calendar requests retry transient HTTP/network failures and use stale cale
   assert.deepEqual(serverFallback, { events: [{ id: "stale" }], __staleCache: true });
   assert.equal(serverFailures, 3);
   assert.equal(serverUnavailable.state.apiRequestsInFlight, 0);
+
+  let timeoutAttempts = 0;
+  const calculationTimeout = makeFetcher(async () => {
+    timeoutAttempts++;
+    return {
+      ok: false,
+      status: 503,
+      headers: { get: () => "5" },
+      clone: () => ({ json: async () => ({ error: { code: "calculation_timeout" } }) })
+    };
+  }, (url, allowStale) => allowStale ? { hit: true, payload: cachedPayload, stale: true } : null);
+  const timeoutFallback = await calculationTimeout.fetchJson("https://example.test/api/calendar/month?year=2026");
+  assert.deepEqual(timeoutFallback, { events: [{ id: "stale" }], __staleCache: true });
+  assert.equal(timeoutAttempts, 1, "an exhausted server calculation must not be restarted automatically");
+  assert.equal(calculationTimeout.state.apiRequestsInFlight, 0);
 });
 
 
@@ -256,8 +282,8 @@ test("Language switch waits for in-flight calendar requests before reloading in 
   assert.match(source, /apiIdleWaiters: \[\]/);
   assert.match(source, /function waitForApiIdle\(\)/);
   assert.match(source, /function reloadLocaleEvents\(requestedLocale\)/);
-  assert.match(source, /loadMonthEvents\(\)\.finally\(\(\) => \{/);
-  assert.match(source, /if \(locale === requestedLocale && getSelectedModules\(\)\.length\) loadDayEvents\(\)/);
+  assert.match(source, /function loadCalendarData\(\)/);
+  assert.match(source, /if \(locale === requestedLocale\) loadCalendarData\(\)/);
   assert.match(source, /state\.apiRequestsInFlight\+\+/);
   assert.match(source, /state\.apiRequestsInFlight--/);
   assert.match(source, /const previousRequestsPending = state\.apiRequestsInFlight > 0/);
@@ -466,7 +492,7 @@ test("Day details use the month response as the sole source of event identity an
 
 test("Selecting a date in an adjacent calendar cell loads that date's month as the canonical event source", () => {
   assert.match(source, /const selectedMonth = new Date\(date\.getFullYear\(\), date\.getMonth\(\), 1\)/);
-  assert.match(source, /if \(monthChanged\) loadMonthEvents\(\);\s*loadDayEvents\(\);/);
+  assert.match(source, /if \(monthChanged\) loadCalendarData\(\);\s*else loadDayEvents\(\);/);
 });
 
 

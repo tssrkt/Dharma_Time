@@ -148,10 +148,19 @@
   function tr(text) { return locale === "en" ? (UI_EN[text] || text) : text; }
   function defaultCityDisplayName() { return locale === "en" ? "Moscow (Russia)" : "Москва (Россия)"; }
   function reloadLocaleEvents(requestedLocale) {
-    // Month and day routes calculate the same month in the backend. Sequence
-    // them so separate server workers cannot start duplicate calculations.
-    loadMonthEvents().finally(() => {
-      if (locale === requestedLocale && getSelectedModules().length) loadDayEvents();
+    if (locale === requestedLocale) loadCalendarData();
+  }
+
+  function loadCalendarData() {
+    // The month and day routes can both trigger an expensive annual North India
+    // cache build. Load the day only after the month succeeded and persisted it.
+    const monthLoad = loadMonthEvents();
+    const monthRequestId = state.monthRequestId;
+    return monthLoad.then(monthLoaded => {
+      if (monthLoaded && monthRequestId === state.monthRequestId && getSelectedModules().length) {
+        return loadDayEvents();
+      }
+      return undefined;
     });
   }
   function setLocale(nextLocale) {
@@ -436,7 +445,17 @@
           writeApiCache(url, payload);
           return payload;
         }
-        if ([429, 502, 503, 504].includes(response.status) && attempt < RETRY_LIMIT) {
+        let responseErrorCode = null;
+        if (response.status === 503 && typeof response.clone === "function") {
+          try {
+            const body = await response.clone().json();
+            responseErrorCode = body && body.error && body.error.code || null;
+          } catch (_) {
+            // Non-JSON proxy errors retain the normal bounded retry behavior.
+          }
+        }
+        if ([429, 502, 503, 504].includes(response.status)
+          && responseErrorCode !== "calculation_timeout" && attempt < RETRY_LIMIT) {
           await wait(retryDelay(response, attempt), signal);
           continue;
         }
@@ -655,8 +674,8 @@
         state.expandedEvents.clear();
         renderCalendar();
         renderDayHeading();
-        if (monthChanged) loadMonthEvents();
-        loadDayEvents();
+        if (monthChanged) loadCalendarData();
+        else loadDayEvents();
       });
       calendarGrid.append(button);
     }
@@ -974,8 +993,7 @@
       renderCalendar();
       return;
     }
-    loadMonthEvents();
-    loadDayEvents();
+    loadCalendarData();
   }
   function makeModuleOption(id, label) {
     return makeCheckboxControl(label, state.selectedModules.has(id), checked => {
@@ -1272,10 +1290,12 @@
         : "";
       renderCalendar();
       renderDayEvents();
+      return true;
     } catch (error) {
-      if (requestId !== state.monthRequestId || error.name === "AbortError") return;
+      if (requestId !== state.monthRequestId || error.name === "AbortError") return false;
       calendarStatus.textContent = safeErrorMessage(error);
       renderCalendar();
+      return false;
     }
   }
   async function loadDayEvents() {
@@ -1338,8 +1358,7 @@
     renderCalendar();
     renderDayHeading();
     if (getSelectedModules().length) {
-      loadMonthEvents();
-      loadDayEvents();
+      loadCalendarData();
     } else {
       state.monthEvents = [];
       state.daySupplementaryEvents = [];
@@ -1362,8 +1381,7 @@
     renderCalendar();
     if (state.monthController) state.monthController.abort();
     if (state.dayController) state.dayController.abort();
-    loadMonthEvents();
-    loadDayEvents();
+    loadCalendarData();
   }
   function setupCityPicker() {
     const input = $("#city-search");
@@ -1417,8 +1435,7 @@
           state.panchangaInfo = null;
           renderCalendar();
           renderDayEvents();
-          loadMonthEvents();
-          loadDayEvents();
+          loadCalendarData();
         });
         item.append(button);
         list.append(item);
@@ -1574,8 +1591,7 @@
     setupCityPicker();
     saveSettings();
     if (getSelectedModules().length) {
-      loadMonthEvents();
-      loadDayEvents();
+      loadCalendarData();
     } else {
       calendarStatus.textContent = "";
       dayStatus.textContent = "";
