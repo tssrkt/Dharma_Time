@@ -466,3 +466,29 @@ test("Moon phase tooltip labels come from the canonical event title and respect 
   assert.match(source, /label: String\(event\.title \|\| phaseDefinition\.label\)/);
   assert.match(source, /const phaseDates = Array\.isArray\(event\.display_dates\) \? event\.display_dates : \[event\.start_date \|\| event\.start\]/);
 });
+
+
+test("City search runs immediately on Enter, selects a visible result, and uses a short debounce plus bounded cache", () => {
+  const start = source.indexOf("    const resultsCache = new Map();", source.indexOf("  function setupCityPicker() {"));
+  const end = source.indexOf('    document.addEventListener("click", event => { if (!event.target.closest(".city-picker")) closeResults(); });', start);
+  assert.ok(start >= 0 && end > start, "city search handlers are present");
+  const cityPicker = source.slice(start, end);
+  assert.match(cityPicker, /const resultsCache = new Map\(\)/);
+  assert.match(cityPicker, /resultsCache\.size > 30/);
+  assert.match(cityPicker, /\}, 120\)/);
+  assert.match(cityPicker, /event\.key !== "Enter"/);
+  assert.match(cityPicker, /event\.preventDefault\(\)/);
+  assert.match(cityPicker, /clearTimeout\(searchTimer\)[\s\S]*runCitySearch\(query\)/);
+  assert.match(cityPicker, /firstResult\.click\(\)/);
+});
+
+
+test("About page city picker also supports immediate Enter search and bounded result caching", () => {
+  const aboutSource = fs.readFileSync(path.join(__dirname, "..", "about.js"), "utf8");
+  assert.match(aboutSource, /const resultsCache = new Map\(\)/);
+  assert.match(aboutSource, /resultsCache\.size > 30/);
+  assert.match(aboutSource, /\}, 120\)/);
+  assert.match(aboutSource, /event\.key !== "Enter"/);
+  assert.match(aboutSource, /event\.preventDefault\(\)/);
+  assert.match(aboutSource, /firstResult\.click\(\)/);
+});

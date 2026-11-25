@@ -1369,7 +1369,9 @@
     resizeInput();
     let searchTimer = null;
     let controller = null;
+    let pendingQuery = "";
     let searchSequence = 0;
+    const resultsCache = new Map();
     function closeResults() { list.hidden = true; input.setAttribute("aria-expanded", "false"); list.replaceChildren(); }
     function showResults(results) {
       list.replaceChildren();
@@ -1409,29 +1411,71 @@
       list.hidden = results.length === 0;
       input.setAttribute("aria-expanded", String(results.length > 0));
     }
+    async function runCitySearch(query) {
+      if (query.length < 2 || input.value.trim() !== query) return;
+      const requestLocale = state.settings.locale || locale;
+      const cacheKey = requestLocale + ":" + query;
+      if (resultsCache.has(cacheKey)) { showResults(resultsCache.get(cacheKey)); return; }
+      if (pendingQuery === query && controller) return;
+      if (controller) controller.abort();
+      const requestController = new AbortController();
+      controller = requestController;
+      pendingQuery = query;
+      const sequence = ++searchSequence;
+      try {
+        const params = new URLSearchParams({ q: query, locale: requestLocale });
+        const payload = await fetchJson(API_BASE + "/api/cities/search?" + params, requestController.signal);
+        const results = payload.results || [];
+        if (sequence === searchSequence && input.value.trim() === query && (state.settings.locale || locale) === requestLocale) {
+          resultsCache.set(cacheKey, results);
+          if (resultsCache.size > 30) resultsCache.delete(resultsCache.keys().next().value);
+          showResults(results);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError" && sequence === searchSequence) closeResults();
+      } finally {
+        if (controller === requestController) {
+          controller = null;
+          pendingQuery = "";
+        }
+      }
+    }
     input.addEventListener("input", () => {
       resizeInput();
       if (searchTimer) clearTimeout(searchTimer);
       if (controller) controller.abort();
+      controller = null;
+      pendingQuery = "";
+      searchSequence += 1;
+      closeResults();
       const query = input.value.trim();
-      if (query.length < 2) { closeResults(); return; }
-      searchTimer = setTimeout(async () => {
-        controller = new AbortController();
-        const sequence = ++searchSequence;
-        try {
-          const params = new URLSearchParams({ q: query, locale: state.settings.locale || locale });
-          const payload = await fetchJson(API_BASE + "/api/cities/search?" + params, controller.signal);
-          if (sequence === searchSequence && input.value.trim() === query) showResults(payload.results || []);
-        } catch (error) {
-          if (error.name !== "AbortError") closeResults();
-        }
-      }, 250);
+      if (query.length < 2) return;
+      searchTimer = setTimeout(() => {
+        searchTimer = null;
+        runCitySearch(query);
+      }, 120);
     });
     input.addEventListener("focus", () => {
       const selectedDisplayName = state.settings.cityDisplayName || (state.settings.cityName === DEFAULTS.cityName ? defaultCityDisplayName() : state.settings.cityName);
       if (input.value.trim().length >= 2 && input.value !== selectedDisplayName) input.dispatchEvent(new Event("input"));
     });
-    input.addEventListener("keydown", event => { if (event.key === "Escape") closeResults(); });
+    input.addEventListener("keydown", event => {
+      if (event.key === "Escape") { closeResults(); return; }
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      if (!list.hidden) {
+        const firstResult = list.querySelector("button.city-result");
+        if (firstResult) { firstResult.click(); return; }
+      }
+      const query = input.value.trim();
+      if (searchTimer) {
+        clearTimeout(searchTimer);
+        searchTimer = null;
+        runCitySearch(query);
+      } else if (pendingQuery !== query) {
+        runCitySearch(query);
+      }
+    });
     document.addEventListener("click", event => { if (!event.target.closest(".city-picker")) closeResults(); });
   }
   function setupThemeToggle() {

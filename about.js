@@ -93,33 +93,77 @@
 
   let timer = null;
   let controller = null;
+  let pendingQuery = "";
   let sequence = 0;
+  const resultsCache = new Map();
+  async function runSearch(query) {
+    if (query.length < 2 || input.value.trim() !== query) return;
+    const requestLocale = settings.locale || "ru";
+    const cacheKey = requestLocale + ":" + query;
+    if (resultsCache.has(cacheKey)) { showResults(resultsCache.get(cacheKey)); return; }
+    if (pendingQuery === query && controller) return;
+    if (controller) controller.abort();
+    const requestController = new AbortController();
+    controller = requestController;
+    pendingQuery = query;
+    const current = ++sequence;
+    try {
+      const params = new URLSearchParams({ q: query, locale: requestLocale });
+      const response = await fetch(API_BASE + "/api/cities/search?" + params, { signal: requestController.signal });
+      if (!response.ok) throw new Error("City search failed");
+      const payload = await response.json();
+      const results = payload.results || [];
+      if (current === sequence && input.value.trim() === query && (settings.locale || "ru") === requestLocale) {
+        resultsCache.set(cacheKey, results);
+        if (resultsCache.size > 30) resultsCache.delete(resultsCache.keys().next().value);
+        showResults(results);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError" && current === sequence) closeResults();
+    } finally {
+      if (controller === requestController) {
+        controller = null;
+        pendingQuery = "";
+      }
+    }
+  }
   input.addEventListener("input", () => {
     resizeInput();
     if (timer) clearTimeout(timer);
     if (controller) controller.abort();
+    controller = null;
+    pendingQuery = "";
+    sequence += 1;
+    closeResults();
     const query = input.value.trim();
-    if (query.length < 2) { closeResults(); return; }
-    timer = setTimeout(async () => {
-      controller = new AbortController();
-      const current = ++sequence;
-      try {
-        const params = new URLSearchParams({ q: query, locale: settings.locale || "ru" });
-        const response = await fetch(API_BASE + "/api/cities/search?" + params, { signal: controller.signal });
-        if (!response.ok) throw new Error("City search failed");
-        const payload = await response.json();
-        if (current === sequence && input.value.trim() === query) showResults(payload.results || []);
-      } catch (error) {
-        if (error.name !== "AbortError") closeResults();
-      }
-    }, 250);
+    if (query.length < 2) return;
+    timer = setTimeout(() => {
+      timer = null;
+      runSearch(query);
+    }, 120);
   });
   input.addEventListener("focus", () => {
     if (input.value.trim().length >= 2 && input.value !== (settings.cityDisplayName || displayName)) {
       input.dispatchEvent(new Event("input"));
     }
   });
-  input.addEventListener("keydown", event => { if (event.key === "Escape") closeResults(); });
+  input.addEventListener("keydown", event => {
+    if (event.key === "Escape") { closeResults(); return; }
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    if (!list.hidden) {
+      const firstResult = list.querySelector("button.city-result");
+      if (firstResult) { firstResult.click(); return; }
+    }
+    const query = input.value.trim();
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+      runSearch(query);
+    } else if (pendingQuery !== query) {
+      runSearch(query);
+    }
+  });
   document.addEventListener("click", event => {
     if (!event.target.closest(".city-picker")) closeResults();
   });
